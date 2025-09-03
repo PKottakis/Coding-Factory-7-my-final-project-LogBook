@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <title>Ερωτήματα Logbook</title>
+    <style>
+        :root {
+            --base-font-size: clamp(12px, 0.9vw + 0.35rem, 16px);
+            --small-font-size: clamp(11px, 0.8vw + 0.25rem, 14px);
+            --button-font-size: clamp(12px, 0.85vw + 0.35rem, 15px);
+            --results-font-size: clamp(11px, 0.85vw + 0.3rem, 15px);
+        }
+        div.breadcrumbs {
+            background: #fff;
+            padding: 3px 40px;
+            border-bottom: 1px solid #e0e0e0;
+            color: #0C4B7F;
+            text-align: left;
+        }
+        .breadcrumbs a {
+            color: #0C4B7F;
+            text-decoration: underline;
+            transition: color 0.15s;
+        }
+        .breadcrumbs a:visited {
+            color: #0C4B7F;
+        }
+        .breadcrumbs a:hover, .breadcrumbs a:active, .breadcrumbs a:focus {
+            text-decoration: none;
+            color: #1666a3;
+            background: #e6f0fa;
+            border-radius: 4px;
+            outline: none;
+        }
+        .breadcrumbs span {
+            color: #888;
+            margin: 0 0.5em;
+        }
+        
+        #custom-admin-header {
+            background: #0C4B7F;
+            color: #fff;
+            padding: 0.8em 2em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            margin: 0;
+            text-align: center; 
+            font-size: var(--base-font-size);
+            margin-top: 0vh; 
+        }
+        .back-btn {
+            display: inline-block;
+            margin: 0 2em 2em 2em;
+            padding: 0em 2em;
+            font-size: var(--button-font-size);
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #218838 0%, #155d27 100%);
+            color: #fff;
+            cursor: pointer;
+            transition: box-shadow 0.2s, transform 0.1s, background 0.2s;
+            box-shadow: 0 2px 8px 0 rgba(33,136,56,0.13), 0 1.5px 4px 0 rgba(60,60,60,0.10);
+        }
+        .back-btn:hover {
+            background: linear-gradient(180deg, #155d27 0%, #0b3314 100%);
+            box-shadow: 0 4px 16px 0 rgba(33,136,56,0.18), 0 2px 8px 0 rgba(60,60,60,0.13);
+            transform: translateY(-2px) scale(1.03);
+        }
+        /* Modern grid layout */
+        .queries-layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: 1.5rem;
+            align-items: start;
+            margin: 1.5rem auto;
+            padding: 0 1.25rem;
+            max-width: 1200px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .query-btn {
+            display: block;
+            margin: 0 0 1em 0;
+            padding: 0.5em 2em;
+            font-size: var(--button-font-size);
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #218838 0%, #155d27 100%);
+            color: #fff;
+            cursor: pointer;
+            transition: box-shadow 0.2s, transform 0.1s, background 0.2s;
+            align-self: stretch;
+            width: 200px;
+            box-sizing: border-box;
+            height: 2.3em;
+            min-height: unset;
+            box-shadow: 0 2px 8px 0 rgba(33,136,56,0.13), 0 1.5px 4px 0 rgba(60,60,60,0.10);
+        }
+        .query-btn:hover {
+            background: linear-gradient(180deg, #155d27 0%, #0b3314 100%);
+            box-shadow: 0 4px 16px 0 rgba(33,136,56,0.18), 0 2px 8px 0 rgba(60,60,60,0.13);
+            transform: translateY(-2px) scale(1.03);
+        }
+        .query-btn.modulation-focus, .query-btn.modulation-active {
+            background: linear-gradient(180deg, #e0a96d 0%, #a9742a 100%) !important;
+            color: #fff !important;
+            box-shadow: 0 4px 16px 0 rgba(169, 116, 42, 0.18), 0 2px 8px 0 rgba(60,60,60,0.13);
+        }
+        .query-btn.decoding-focus, .query-btn.decoding-active,
+        .query-btn.callsign-focus, .query-btn.callsign-active,
+        .query-btn.date-focus, .query-btn.date-active {
+            background: linear-gradient(180deg, #e0a96d 0%, #a9742a 100%) !important;
+            color: #fff !important;
+            box-shadow: 0 4px 16px 0 rgba(169, 116, 42, 0.18), 0 2px 8px 0 rgba(60,60,60,0.13);
+        }
+        .query-btn.pagination-btn {
+            background: linear-gradient(180deg, #155d27 0%, #0b3314 100%) !important;
+            color: #fff !important;
+            box-shadow: 0 2px 8px 0 rgba(21,93,39,0.18), 0 1.5px 4px 0 rgba(60,60,60,0.10) !important;
+            height: 3em;
+        }
+        .query-btn.pagination-btn:hover {
+            background: linear-gradient(180deg, #0b3314 0%, #000 100%) !important;
+            color: #fff !important;
+            box-shadow: 0 4px 16px 0 rgba(21,93,39,0.22), 0 2px 8px 0 rgba(60,60,60,0.13) !important;
+        }
+        #results {
+            min-width: 420px;
+            max-width: 900px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 1.5em 1.5em 3.2em 1.5em;
+            text-align: left;
+            max-height: none;
+            /* Fixed visible area for 14 rows even if there is less data */
+            height: calc(12 * 3.4em); 
+            font-size: var(--results-font-size);
+            box-sizing: border-box;
+            overflow: visible;
+            margin-bottom: 0.05em;
+            position: relative;
+            z-index: 1;
+        }
+        .entry { border-bottom: 1px solid #eee; padding: 0.5em 0; }
+        .entry:last-child { border-bottom: none; }
+        .pagination-btn {
+            padding: 0.5em 1em;
+            font-size: 0.9em;
+            height: 2em;
+            min-height: unset;
+            margin: 0 1em;
+        }
+        #results table, #results th, #results td {
+            font-size: 1em;
+            font-family: Arial, sans-serif;
+        }
+        #results table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: var(--results-font-size);
+            table-layout: fixed;
+        }
+        #results th, #results td {
+            border-bottom: 1px solid #eee;
+            padding: clamp(0.2em, 0.4vw, 0.5em) clamp(0.3em, 0.6vw, 0.6em);
+            text-align: left;
+            word-wrap: break-word;
+            overflow-wrap: anywhere;
+        }
+        /* Placeholder rows to keep consistent height without overlap */
+        #results tr.placeholder td { background: transparent; }
+        #results th {
+            background: #f2f2f2;
+            font-weight: bold;
+        }
+        #results td.callsign, #results th.callsign {
+            width: clamp(18ch, 24vw, 25ch);
+            max-width: clamp(18ch, 24vw, 25ch);
+            min-width: clamp(14ch, 18vw, 22ch);
+            font-family: monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        #results th.callsign, #results td.callsign {
+            font-family: Arial, sans-serif;
+            font-size: clamp(12px, 0.8vw + 0.4rem, 16px);
+        }
+        .band-box, .modulation-box, .decoding-box, .callsign-box, .date-box {
+            border: 1px solid #bbb;
+            background: #f7f7fa;
+            border-radius: 5px;
+            padding: 0.01em 0.05em 0.05em 0.05em;
+            margin-top: 0.05em;
+            margin-bottom: 0.01em;
+            text-align: center;
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            min-height: 70px;
+        }
+        /* Ensure all buttons inside the left panel align and take full panel width */
+        .button-panel .query-btn { width: 100%; align-self: stretch; }
+        .button-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 0.8em 0.5em 1em 0.5em;
+            margin-bottom: 2em;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 260px;
+            flex: 0 0 260px;
+            position: sticky;
+            top: 16px;
+        }
+        .button-panel .panel-title {
+            font-weight: 700;
+            color: #0C4B7F;
+            margin: 0.2em 0 0.6em 0;
+        }
+        #pagination {
+            text-align: left;
+            margin-top: 1em;
+            min-height: 2.5em;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            width: 100%;
+            max-width: 640px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Results card wrapper modern styles */
+        .results-card {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px) !important;
+            border: 2.5px solid rgba(255, 255, 255, 0.3) !important;
+            border-radius: 18px !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+            padding: 0 0 0.7em 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            /* Natural height; table will be padded with placeholder rows */
+        }
+        .results-footer {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0 1rem;
+            margin: 1.2em auto 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5em;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 2;
+        }
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.85rem 1rem 0 1rem;
+        }
+        .results-title {
+            font-weight: 700; color: #0C4B7F; margin: 0;
+        }
+        .results-tools { display:flex; align-items:center; gap:0.5rem; }
+
+        /* Responsive layout */
+        @media (max-width: 1024px) {
+            .queries-layout { grid-template-columns: 240px 1fr; gap: 1.25rem; }
+            .button-panel { flex: 0 0 240px; width: 240px; }
+        }
+        @media (max-width: 840px) {
+            .queries-layout { grid-template-columns: 1fr; gap: 1rem; }
+            .button-panel { position: static; width: 100%; flex: 0 0 auto; }
+            #results { min-width: auto; }
+            .results-footer { padding: 0 0.8rem; }
+        }
+        @media (max-width: 640px) {
+            #results { padding: 1.1em; }
+            .band-box, .modulation-box, .decoding-box, .callsign-box, .date-box { width: 100%; min-width: 0; max-width: 100%; }
+            .query-btn { width: 100%; }
+            .results-footer { padding: 0 0.6rem; }
+        }
+    </style>
+</head>
+<body>
+<!-- Ενοποιημένο custom admin header -->
+<div id="custom-admin-header">
+    <div style="font-size:1.25em; font-weight:500;">
+        Καλώς ήρθατε, {{ request.user.get_username|default:"admin" }}.
+    </div>
+    <div style="font-size:1.5em; font-weight:bold; color:#fff; text-align:center; flex:1;">
+        LogBook
+    </div>
+    <div style="font-size:1em; display: flex; align-items: center;">
+
+        <a href="/admin/password_change/" style="color:#fff; text-decoration:underline; margin-right:1.5em;">Αλλαγή συνθηματικού</a>
+        <a href="#" id="help-link" style="color:#fff; text-decoration:underline; margin-right:1.5em;">Βοήθεια</a>
+        <form method="post" action="/admin/logout/" style="display:inline; margin:0; padding:0;">
+            {% csrf_token %}
+            <button type="submit" style="background:none; border:none; color:#fff; text-decoration:underline; cursor:pointer; font: inherit;">Αποσύνδεση</button>
+        </form>
+        <span style="color:#fff; margin-left:1.5em;">SV1SXY Ver1.0</span>
+    </div>
+</div>
+<!-- Help Modal -->
+<div id="help-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index: 10000; align-items:center; justify-content:center; padding: 20px;">
+    <div style="background:#ffffff; max-width: 900px; width: 100%; max-height: 90vh; overflow:auto; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.25);">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #e5e7eb; background:#0C4B7F; color:#fff; border-top-left-radius:12px; border-top-right-radius:12px;">
+            <h3 style="margin:0; font-size:18px;">Βοήθεια</h3>
+            <button id="help-close" aria-label="Κλείσιμο" style="background:transparent; border:none; color:#fff; font-size:22px; cursor:pointer;">×</button>
+        </div>
+        <div style="padding: 20px; color:#111827; line-height:1.6; text-align:left;">
+            <p><strong>LogBook – Έκδοση 1</strong><br>
+            Δημιουργός: Παναγιώτης Κοττάκης  SV1SXY</p>
+            <p>Η εφαρμογή LogBook αναπτύχθηκε ως τελική εργασία για το πρόγραμμα Coding Factory 7 του Οικονομικού Πανεπιστημίου Αθηνών.<br>
+            Στόχος ήταν η δημιουργία ενός έργου με πραγματική χρησιμότητα, ώστε να αποτελέσει ένα εργαλείο και όχι απλώς μια κώδικα-εργασία που θα ξεχαστεί.</p>
+            <p>Η εφαρμογή αφορά την καταγραφή ραδιοφωνικών σταθμών (DX Radio) και επαφών ραδιοερασιτεχνών (LogBook).<br>
+            Η κοινότητα των ραδιοερασιτεχνών αριθμεί περισσότερα από 3 εκατομμύρια μέλη παγκοσμίως. Για τον λόγο αυτό, σε μελλοντικές εκδόσεις προβλέπεται υποστήριξη επιπλέον γλωσσών και νέων λειτουργιών.</p>
+            <p><strong>Η υλοποίηση βασίστηκε σε:</strong></p>
+            <ul style="margin-top:0;">
+                <li>Python Django</li>
+                <li>SQLite3</li>
+                <li>Vanilla JavaScript & CSS3</li>
+                <li>Υποστήριξη από AI εργαλεία σε επιλεγμένα σημεία, για εξοικονόμηση χρόνου.</li>
+            </ul>
+            <h4 style="margin-top:16px;">Οδηγίες Χρήσης</h4>
+            <p>Μετά την εκτέλεση του προγράμματος, μεταβείτε στη διεύθυνση:<br>
+            <code>http://127.0.0.1:8000</code></p>
+            <h4>Κύρια Μενού</h4>
+            <ol>
+                <li>
+                    Ερωτήματα στη Βάση
+                    <ul>
+                        <li>Παρέχει τη δυνατότητα προβολής δεδομένων χωρίς να απαιτείται  χρήστης.</li>
+                    </ul>
+                </li>
+                <li>
+                    Διαχειριστικό
+                    <ul>
+                        <li>Όνομα χρήστη: admin</li>
+                        <li>Συνθηματικό: 12345678</li>
+                    </ul>
+                </li>
+            </ol>
+            <p><strong>Σημαντικό:</strong> Κατά την πρώτη χρήση αλλάξτε άμεσα το email που του χρήστη admin ώστε να λαμβάνετε OTP για επαναφορά κωδικού. Συνιστάται επίσης η αλλαγή του συνθηματικού.</p>
+            <h4>Χρήστες</h4>
+            <ul>
+                <li>
+                    Προσθήκη: Ορισμός Ονόματος χρήστη, Συνθηματικού και Email.
+                    <ul>
+                        <li>Το email είναι απαραίτητο για την επαναφορά κωδικού.</li>
+                        <li>Δυνατότητα δημιουργίας ομάδων (λειτουργία υπό ανάπτυξη).</li>
+                        <li>Δικαιώματα χρήστη: Διαχειριστής ή χρήστης<br>
+                        Αν θέλουμε να είναι χρήστης π.χ. να μπορεί να προσθέτει μόνο σταθμούς και να μη μπορεί να διαγράφει η να διορθώνει επιλέγουμε τα ανάλογα δικαιώματα (συνήθως για συλλόγους ομάδες κλπ).</li>
+                        <li>Μπορούμε στην περίπτωση admin να επιλέξουμε με τικ τα τρια κουτάκια κάτω από το πλαίσιο που βάζουμε το email για να μην χρειαστούμε να προσθέσουμε δικαιώματα : Ενεργό , Κατάσταση προσωπικού, Κατάσταση υπερχρήστη.</li>
+                    </ul>
+                </li>
+                <li>Επεξεργασία / Απενεργοποίηση: Αντί για διαγραφή χρήστη, προτείνεται η απενεργοποίηση με αφαίρεση του “τικ” από το πεδίο Ενεργό.</li>
+            </ul>
+            <h4>Σταθμοί & Μπάντες</h4>
+            <ul>
+                <li>
+                    Μπάντες:
+                    <ul>
+                        <li>Προσθήκη νέας μπάντας (π.χ. 40m η να προσθέσουμε για μελλοντική χρήση και να είναι ανενεργή έως να χρειαστεί να την ενεργοποιήσουμε).</li>
+                        <li>Αλλαγή / Ενεργοποίηση / Απενεργοποίηση.</li>
+                        <li>Προσοχή: Η διαγραφή μπάντας αφαιρεί και όλες τις σχετικές εγγραφές.</li>
+                    </ul>
+                </li>
+                <li>
+                    Σταθμοί:
+                    <ul>
+                        <li>Προσθήκη νέου σταθμού ή επαφής.</li>
+                        <li>Η συχνότητα μορφοποιείται αυτόματα – προσοχή δεν απαιτείται εισαγωγή τελειών (χιλιάδων). (πριν τη αποθήκευση πραγματοποιήστε ελέγχω αν η συχνοτήτα είναι σωστή λόγο του αυτοματισμού)</li>
+                        <li>Τα μηνύματα λάθους θα σας καθοδηγούν για ορθή καταχώρηση (π.χ. αναντιστοιχία αναλογικής/ψηφιακής επαφής, δεν μπορείτε να επιλέξετε αναλογικό και FT8 που είναι ψηφιακό)</li>
+                        <li>Αλλαγή: Δυνατότητα επεξεργασίας ή διαγραφης .στα φίλτρα που υπάρχουν δεξιά  έχουμε την δυνατότητα να αναζητήσουμε εγγραφές επαφών με κριτήρια, πχ μόνο ψηφιακά και 20m.</li>
+                    </ul>
+                </li>
+            </ul>
+            <h4>Λειτουργίες Backup & Restore</h4>
+            <ul>
+                <li>
+                    Backup Βάσης:
+                    <ul>
+                        <li>Δημιουργεί αυτόματα αντίγραφο ασφαλείας.</li>
+                        <li>Αποθηκεύεται στον φάκελο Downloads του χρήστη (ή στο Desktop / φάκελο project εάν δεν υπάρχει).</li>
+                        <li>Το αρχείο έχει μοναδικό όνομα με timestamp: <code>db_backup_YYYYMMDD_HHMMSS.sqlite3</code></li>
+                    </ul>
+                </li>
+                <li>
+                    Restore Βάσης:
+                    <ul>
+                        <li>Αντικαθιστά την τρέχουσα βάση δεδομένων με το επιλεγμένο backup.</li>
+                        <li>Πραγματοποιήστε πάντα backup πριν από restore.</li>
+                        <li>Δημιουργούνται αυτόματα safety backups για μεγαλύτερη ασφάλεια.</li>
+                    </ul>
+                </li>
+            </ul>
+            <h4>Καλές Πρακτικές</h4>
+            <ul>
+                <li>✅ Άμεση αλλαγή email & συνθηματικού του admin.</li>
+                <li>✅ Χρήση απενεργοποίησης αντί για διαγραφή χρηστών.</li>
+                <li>✅ Συχνά backup πριν από κάθε restore.</li>
+            </ul>
+            <h4>Επικοινωνία</h4>
+            <p>Για προτάσεις ή παρατηρήσεις μπορείτε να επικοινωνείτε στο email:<br>
+            📧 <a href="mailto:sv1sxy@gmail.com">sv1sxy@gmail.com</a></p>
+            <p><em>Έκδοση 1</em></p>
+        </div>
+    </div>
+</div>
+<!-- Breadcrumbs bar below header -->
+<div class="breadcrumbs">
+    <a href="/">Αρχική</a>
+</div>
+            <div class="queries-layout">
+        <div class="button-panel">
+            <h3 class="panel-title">Φίλτρα</h3>
+            <button class="query-btn" onclick="fetchAnalog(1)">Επαφές Analog</button>
+            <button class="query-btn" onclick="fetchDigital(1)">Επαφές Digital</button>
+            <div class="band-box">
+                <button class="query-btn" style="margin-top:0.1em; cursor: default; pointer-events: none;">Επαφές Band</button>
+                <label for="band-select" style="font-weight:bold; display:block; margin-top:0.05em;">Επιλογή Band:</label>
+                <select id="band-select" style="font-size:1em; padding:0.3em 1em; margin:0 0.5em 1em 0.5em;"></select>
+            </div>
+            <div class="modulation-box">
+                <button class="query-btn" id="modulation-btn" style="margin-top:0.1em; cursor: default; pointer-events: none;">Επαφές Modulation</button>
+                <label for="modulation-select" style="font-weight:bold; display:block; margin-top:0.05em;">Επιλογή Modulation:</label>
+                <select id="modulation-select" style="font-size:1em; padding:0.3em 1em; margin:0 0.5em 1em 0.5em;">
+                    <option value="AM">AM</option>
+                    <option value="FM">FM</option>
+                    <option value="USB">USB</option>
+                    <option value="LSB">LSB</option>
+                    <option value="SSB">SSB</option>
+                    <option value="CW">CW</option>
+                </select>
+            </div>
+            <div class="decoding-box">
+                <button class="query-btn" id="decoding-btn" style="margin-top:0.1em; cursor: default; pointer-events: none;">Επαφές Decoding</button>
+                <label for="decoding-select" style="font-weight:bold; display:block; margin-top:0.05em;">Επιλογή Decoding:</label>
+                <select id="decoding-select" style="font-size:1em; padding:0.3em 1em; margin:0 0.5em 1em 0.5em;">
+                    <option value="C4FM">C4FM</option>
+                    <option value="DMR">DMR</option>
+                    <option value="DSTAR">DSTAR</option>
+                    <option value="FAX">FAX</option>
+                    <option value="FSK31">FSK31</option>
+                    <option value="FT4">FT4</option>
+                    <option value="FT8">FT8</option>
+                    <option value="JT65">JT65</option>
+                    <option value="JT9">JT9</option>
+                    <option value="RTTY">RTTY</option>
+                    <option value="SSTV">SSTV</option>
+                </select>
+            </div>
+            <div class="callsign-box">
+                <button class="query-btn" id="callsign-btn" style="margin-top:0.1em; cursor: default; pointer-events: none;">Εύρεση Callsign</button>
+                <label for="callsign-input" style="font-weight:bold; display:block; margin-top:0.05em;">Αναζήτηση Callsign:</label>
+                <input id="callsign-input" type="text" maxlength="20" style="font-size:1em; padding:0.08em 0.2em; margin:0 0.5em 1em 0.5em; width:90%;" placeholder="π.χ. SV1ABC ή SV1*" />
+                <div style="font-size:0.8em; color:#666; margin-top:0.2em; text-align:center;">Χρησιμοποιήστε * για wildcard</div>
+            </div>
+            <div class="date-box">
+                <button class="query-btn" id="date-btn" style="margin-top:0.1em; cursor: default; pointer-events: none;">Εύρεση Ημ/νίας</button>
+                <label for="date-input" style="font-weight:bold; display:block; margin-top:0.05em;">Αναζήτηση Ημερομηνίας:</label>
+                <input id="date-input" type="date" style="font-size:1em; padding:0.08em 0.2em; margin:0 0.5em 1em 0.5em; width:90%;" />
+            </div>
+        </div>
+        <div style="width:100%;margin-left:0;">
+            <div class="results-card">
+                <div class="results-header">
+                    <h3 class="results-title">Αποτελέσματα</h3>
+                    <div class="results-tools">
+                        <button class="query-btn pagination-btn" onclick="window.print()" style="height:2.4em;">Εκτύπωση</button>
+                    </div>
+                </div>
+                <div id="results"></div>
+                <div class='results-footer'>
+                    <div id="pagination" style="margin:0;flex:0 0 160px;text-align:left;"></div>
+                    <span id="page-info" style="font-size:1em;min-width:120px;display:inline-block;text-align:center;flex:1 1 auto;">Σελίδα 1 από 1</span>
+                    <button class="back-btn" onclick="window.location.href='/'" style="margin:0;flex:0 0 220px;padding:0.5em 3.2em;height:2.6em;min-height:unset;white-space:nowrap;vertical-align:middle;line-height:normal;">Επιστροφή στο Μενού</button>
+                </div>
+            </div>
+        </div>
+        </div>
+    <script>
+        let currentQuery = null;
+        let currentPage = 1;
+        let lastPage = 1;
+        let lastNumPages = 1;
+
+        function renderPagination(hasPrev, hasNext, page, numPages, fetchFn) {
+            let html = '';
+            // Αν είμαστε στην πρώτη σελίδα και υπάρχουν κι άλλες, δείξε 'Επόμενη'.
+            // Αν είμαστε σε ενδιάμεση ή τελευταία σελίδα και υπάρχει προηγούμενη, δείξε 'Προηγ.'
+            if (numPages > 1 && hasPrev) {
+                html += `<button onclick=\"${fetchFn}(${page-1})\" class=\"query-btn pagination-btn\">&laquo; Προηγ.</button>`;
+            } else if (numPages > 1 && hasNext) {
+                html += `<button onclick=\"${fetchFn}(${page+1})\" class=\"query-btn pagination-btn\">Επόμενη &raquo;</button>`;
+            } else {
+                html += `&nbsp;`;
+            }
+            document.getElementById('pagination').innerHTML = html;
+            // Ενημέρωση info
+            document.getElementById('page-info').textContent = `Σελίδα ${page} από ${numPages}`;
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('page-info').textContent = 'Σελίδα 1 από 1';
+        });
+
+        // Fixed rows per page (no scroll requirement)
+        const dynamicPerPage = 15;
+        // Help modal logic
+        document.addEventListener('DOMContentLoaded', function() {
+            var helpLink = document.getElementById('help-link');
+            var helpModal = document.getElementById('help-modal');
+            var helpClose = document.getElementById('help-close');
+            if (helpLink && helpModal && helpClose) {
+                helpLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    helpModal.style.display = 'flex';
+                });
+                helpClose.addEventListener('click', function() {
+                    helpModal.style.display = 'none';
+                });
+                helpModal.addEventListener('click', function(e) {
+                    if (e.target === helpModal) {
+                        helpModal.style.display = 'none';
+                    }
+                });
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        helpModal.style.display = 'none';
+                    }
+                });
+            }
+        });
+
+        function renderTable(results) {
+            if (results.length === 0) return '<em>Δεν βρέθηκαν εγγραφές.</em>';
+            let html = '<table><thead><tr>' +
+                '<th class="callsign">Callsign</th><th>Band</th><th>Συχνότητα</th><th>Modulation</th><th>Decoding</th><th>Ημ/νία</th><th>Ώρα</th>' +
+                '</tr></thead><tbody>';
+            html += results.map(entry =>
+                `<tr>
+                    <td class="callsign">${entry.Callsign_Station}</td>
+                    <td>${entry.band}</td>
+                    <td>${entry.Frequency}</td>
+                    <td>${entry.Modulation ? entry.Modulation : '-'}</td>
+                    <td>${entry.Decoding ? entry.Decoding : '-'}</td>
+                    <td>${entry.Date}</td>
+                    <td>${entry.Time}</td>
+                </tr>`
+            ).join('');
+            // Pad with placeholder rows up to 14 rows to maintain height
+            const targetRows = 14;
+            const missing = Math.max(0, targetRows - results.length);
+            if (missing > 0) {
+                for (let i = 0; i < missing; i++) {
+                    html += '<tr class="placeholder"><td colspan="7">&nbsp;</td></tr>';
+                }
+            }
+            html += '</tbody></table>';
+            return html;
+        }
+
+        function fetchAnalog(page=1) {
+            currentQuery = 'analog';
+            currentPage = page;
+            const results = document.getElementById('results');
+            const pagination = document.getElementById('pagination');
+            results.innerHTML = 'Φόρτωση...';
+            pagination.innerHTML = '';
+            fetch(`/queries/analog/?page=${page}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.results.length === 0) {
+                        results.innerHTML = '<em>Δεν βρέθηκαν εγγραφές με Analog = True.</em>';
+                        pagination.innerHTML = '';
+                        return;
+                    }
+                    results.innerHTML = renderTable(data.results);
+                    renderPagination(data.has_previous, data.has_next, data.page, data.num_pages, 'fetchAnalog');
+                })
+                .catch(() => {
+                    results.innerHTML = 'Σφάλμα κατά τη φόρτωση.';
+                    pagination.innerHTML = '';
+                });
+        }
+        function fetchDigital(page=1) {
+            currentQuery = 'digital';
+            currentPage = page;
+            const results = document.getElementById('results');
+            const pagination = document.getElementById('pagination');
+            results.innerHTML = 'Φόρτωση...';
+            pagination.innerHTML = '';
+            fetch(`/queries/digital/?page=${page}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.results.length === 0) {
+                        results.innerHTML = '<em>Δεν βρέθηκαν εγγραφές με Digital = True.</em>';
+                        pagination.innerHTML = '';
+                        return;
+                    }
+                    results.innerHTML = renderTable(data.results);
+                    renderPagination(data.has_previous, data.has_next, data.page, data.num_pages, 'fetchDigital');
+                })
+                .catch(() => {
+                    results.innerHTML = 'Σφάλμα κατά τη φόρτωση.';
+                    pagination.innerHTML = '';
+                });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            fetch('/queries/bands/')
+                .then(res => res.json())
+                .then(data => {
+                    const select = document.getElementById('band-select');
+                    select.innerHTML = data.bands.map(b => `<option value="${b}">${b}</option>`).join('');
+                    
+                    // Αυτόματη εκτέλεση όταν επιλέγεται band
+                    select.addEventListener('change', function() {
+                        fetchBandEntries(1);
+                    });
+                    
+                    // Αυτόματη εκτέλεση όταν επιλέγεται modulation
+                    const modulationSelect = document.getElementById('modulation-select');
+                    modulationSelect.addEventListener('change', function() {
+                        fetchModulationEntries(1);
+                    });
+                    
+                    // Αυτόματη εκτέλεση όταν επιλέγεται decoding
+                    const decodingSelect = document.getElementById('decoding-select');
+                    decodingSelect.addEventListener('change', function() {
+                        fetchDecodingEntries(1);
+                    });
+                    
+                    // Αυτόματη εκτέλεση όταν πληκτρολογείται callsign με debounce
+                    const callsignInput = document.getElementById('callsign-input');
+                    let callsignTimeout;
+                    callsignInput.addEventListener('input', function() {
+                        clearTimeout(callsignTimeout);
+                        callsignTimeout = setTimeout(() => {
+                            if (this.value.trim().length >= 2) {
+                                fetchCallsignEntries(1);
+                            }
+                        }, 500); // 500ms delay
+                    });
+                    
+                            // Αυτόματη εκτέλεση όταν επιλέγεται ημερομηνία
+        const dateInput = document.getElementById('date-input');
+        dateInput.addEventListener('change', function() {
+            if (this.value) {
+                fetchDateEntries(1);
+            }
+        });
+        
+        // Αυτόματο logout όταν κλείνει ο browser
+        window.addEventListener('beforeunload', function() {
+            // Αποστολή logout request με sendBeacon αν υποστηρίζεται
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon('/auto_logout/', '');
+            } else {
+                // Εναλλακτική λύση με XMLHttpRequest
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '/auto_logout/', false);
+                xhr.send();
+            }
+        });
+        
+        // Αυτόματο logout όταν γίνεται unload (κλείσιμο tab/window)
+        window.addEventListener('unload', function() {
+            // Αποστολή logout request με sendBeacon αν υποστηρίζεται
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon('/auto_logout/', '');
+            } else {
+                // Εναλλακτική λύση με XMLHttpRequest
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '/auto_logout/', false);
+                xhr.send();
+            }
+        });
+                });
+        });
+
+        function fetchBandEntries(page=1) {
+            const band = document.getElementById('band-select').value;
+            const results = document.getElementById('results');
+            const pagination = document.getElementById('pagination');
+            results.innerHTML = 'Φόρτωση...';
+            pagination.innerHTML = '';
+            fetch(`/queries/band_entries/?band=${encodeURIComponent(band)}&page=${page}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.results.length === 0) {
+                        results.innerHTML = '<em>Δεν βρέθηκαν εγγραφές για αυτή τη Band.</em>';
+                        pagination.innerHTML = '';
+                        return;
+                    }
+                    results.innerHTML = renderTable(data.results);
+                    renderPagination(data.has_previous, data.has_next, data.page, data.num_pages, 'fetchBandEntries');
+                })
+                .catch(() => {
+                    results.innerHTML = 'Σφάλμα κατά τη φόρτωση.';
+                    pagination.innerHTML = '';
+                });
+        }
+
+        function fetchModulationEntries(page=1) {
+            const modulation = document.getElementById('modulation-select').value;
+            const results = document.getElementById('results');
+            const pagination = document.getElementById('pagination');
+            results.innerHTML = 'Φόρτωση...';
+            pagination.innerHTML = '';
+            fetch(`/queries/modulation_entries/?modulation=${encodeURIComponent(modulation)}&page=${page}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.results.length === 0) {
+                        results.innerHTML = '<em>Δεν βρέθηκαν εγγραφές για αυτό το Modulation.</em>';
+                        pagination.innerHTML = '';
+                        return;
+                    }
+                    results.innerHTML = renderTable(data.results);
+                    renderPagination(data.has_previous, data.has_next, data.page, data.num_pages, 'fetchModulationEntries');
+                })
+                .catch(() => {
+                    results.innerHTML = 'Σφάλμα κατά τη φόρτωση.';
+                    pagination.innerHTML = '';
+                });
+        }
+
+        function fetchDecodingEntries(page=1) {
+            const decoding = document.getElementById('decoding-select').value;
+            const results = document.getElementById('results');
+            const pagination = document.getElementById('pagination');
+            results.innerHTML = 'Φόρτωση...';
+            pagination.innerHTML = '';
+            fetch(`/queries/decoding_entries/?decoding=${encodeURIComponent(decoding)}&page=${page}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.results.length === 0) {
+                        results.innerHTML = '<em>Δεν βρέθηκαν εγγραφές για αυτό το Decoding.</em>';
+                        pagination.innerHTML = '';
+                        return;
+                    }
+                    results.innerHTML = renderTable(data.results);
+                    renderPagination(data.has_previous, data.has_next, data.page, data.num_pages, 'fetchDecodingEntries');
+                })
+                .catch(() => {
+                    results.innerHTML = 'Σφάλμα κατά τη φόρτωση.';
+                    pagination.innerHTML = '';
+                });
+        }
+
+        function fetchCallsignEntries(page=1) {
+            const callsign = document.getElementById('callsign-input').value.trim();
+            const results = document.getElementById('results');
+            const pagination = document.getElementById('pagination');
+            
+            // Έξυπνοι κανόνες αναζήτησης
+            if (callsign.length === 0) {
+                results.innerHTML = '<em>Πληκτρολογήστε ένα callsign για αναζήτηση.</em>';
+                pagination.innerHTML = '';
+                return;
+            }
+            
+            // Αφαίρεση ειδικών χαρακτήρων και κενών
+            let cleanCallsign = callsign.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+            
+            if (cleanCallsign.length < 2) {
+                results.innerHTML = '<em>Πληκτρολογήστε τουλάχιστον 2 χαρακτήρες για αναζήτηση.</em>';
+                pagination.innerHTML = '';
+                return;
+            }
+            
+            // Δεν προσθέτουμε αυτόματα wildcard - ο χρήστης μπορεί να το κάνει μόνος του
+            // Αν θέλει να βρει όλα τα callsigns που ξεκινάνε με κάτι, ας προσθέσει *
+            
+            results.innerHTML = 'Φόρτωση...';
+            pagination.innerHTML = '';
+            fetch(`/queries/callsign_entries/?callsign=${encodeURIComponent(cleanCallsign)}&page=${page}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.results.length === 0) {
+                        results.innerHTML = '<em>Δεν βρέθηκαν εγγραφές για αυτό το Callsign. Δοκιμάστε με wildcard (*) για ευρύτερη αναζήτηση.</em>';
+                        pagination.innerHTML = '';
+                        return;
+                    }
+                    results.innerHTML = renderTable(data.results);
+                    renderPagination(data.has_previous, data.has_next, data.page, data.num_pages, 'fetchCallsignEntries');
+                })
+                .catch(() => {
+                    results.innerHTML = 'Σφάλμα κατά τη φόρτωση.';
+                    pagination.innerHTML = '';
+                });
+        }
+
+        function fetchDateEntries(page=1) {
+            const date = document.getElementById('date-input').value;
+            const results = document.getElementById('results');
+            const pagination = document.getElementById('pagination');
+            if (!date) {
+                results.innerHTML = '<em>Επιλέξτε ημερομηνία για αναζήτηση.</em>';
+                pagination.innerHTML = '';
+                return;
+            }
+            results.innerHTML = 'Φόρτωση...';
+            pagination.innerHTML = '';
+            fetch(`/queries/date_entries/?date=${encodeURIComponent(date)}&page=${page}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.results.length === 0) {
+                        results.innerHTML = '<em>Δεν βρέθηκαν εγγραφές για αυτή την ημερομηνία.</em>';
+                        pagination.innerHTML = '';
+                        return;
+                    }
+                    results.innerHTML = renderTable(data.results);
+                    renderPagination(data.has_previous, data.has_next, data.page, data.num_pages, 'fetchDateEntries');
+                })
+                .catch(() => {
+                    results.innerHTML = 'Σφάλμα κατά τη φόρτωση.';
+                    pagination.innerHTML = '';
+                });
+        }
+
+        // Highlight Modulation button when select is focused
+        const modulationSelect = document.getElementById('modulation-select');
+        const modulationBtn = document.getElementById('modulation-btn');
+        if (modulationSelect && modulationBtn) {
+            modulationSelect.addEventListener('focus', function() {
+                modulationBtn.classList.add('modulation-focus');
+            });
+            modulationSelect.addEventListener('blur', function() {
+                modulationBtn.classList.remove('modulation-focus');
+            });
+            modulationBtn.addEventListener('click', function() {
+                modulationBtn.classList.remove('modulation-focus');
+                modulationBtn.classList.add('modulation-active');
+                setTimeout(() => modulationBtn.classList.remove('modulation-active'), 200);
+            });
+        }
+
+        // Highlight Band button when select is focused
+        const bandSelect = document.getElementById('band-select');
+        const bandBtn = document.querySelector('.band-box .query-btn');
+        if (bandSelect && bandBtn) {
+            bandSelect.addEventListener('focus', function() {
+                bandBtn.classList.add('modulation-focus');
+            });
+            bandSelect.addEventListener('blur', function() {
+                bandBtn.classList.remove('modulation-focus');
+            });
+        }
+
+        // Highlight Decoding button when select is focused
+        const decodingSelect = document.getElementById('decoding-select');
+        const decodingBtn = document.getElementById('decoding-btn');
+        if (decodingSelect && decodingBtn) {
+            decodingSelect.addEventListener('focus', function() {
+                decodingBtn.classList.add('decoding-focus');
+            });
+            decodingSelect.addEventListener('blur', function() {
+                decodingBtn.classList.remove('decoding-focus');
+            });
+            decodingBtn.addEventListener('click', function() {
+                decodingBtn.classList.remove('decoding-focus');
+                decodingBtn.classList.add('decoding-active');
+                setTimeout(() => decodingBtn.classList.remove('decoding-active'), 200);
+            });
+        }
+
+        // Highlight Callsign button when input is focused
+        const callsignInput = document.getElementById('callsign-input');
+        const callsignBtn = document.getElementById('callsign-btn');
+        if (callsignInput && callsignBtn) {
+            callsignInput.addEventListener('focus', function() {
+                callsignBtn.classList.add('callsign-focus');
+            });
+            callsignInput.addEventListener('blur', function() {
+                callsignBtn.classList.remove('callsign-focus');
+            });
+            callsignBtn.addEventListener('click', function() {
+                callsignBtn.classList.remove('callsign-focus');
+                callsignBtn.classList.add('callsign-active');
+                setTimeout(() => callsignBtn.classList.remove('callsign-active'), 200);
+            });
+        }
+
+        // Highlight Date button when input is focused
+        const dateInput = document.getElementById('date-input');
+        const dateBtn = document.getElementById('date-btn');
+        if (dateInput && dateBtn) {
+            dateInput.addEventListener('focus', function() {
+                dateBtn.classList.add('date-focus');
+            });
+            dateInput.addEventListener('blur', function() {
+                dateBtn.classList.remove('date-focus');
+            });
+            dateBtn.addEventListener('click', function() {
+                dateBtn.classList.remove('date-focus');
+                dateBtn.classList.add('date-active');
+                setTimeout(() => dateBtn.classList.remove('date-active'), 200);
+            });
+        }
+
+
+    </script>
+</body>
+</html> 

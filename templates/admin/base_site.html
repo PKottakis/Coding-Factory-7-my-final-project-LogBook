@@ -1,0 +1,573 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block header %}
+    <div id="custom-admin-header" style="background:#0C4B7F; color:#fff; padding: 1.2em 2em; display:flex; align-items:center; justify-content:space-between;">
+        <div style="font-size:1.25em; font-weight:500;">
+            Καλώς ήρθατε, {{ request.user.get_username }}.
+        </div>
+        <div style="font-size:1.5em; font-weight:bold; color:#fff; text-align:center; flex:1;">
+            LogBook
+        </div>
+        <div style="font-size:1em; display: flex; align-items: center;">
+
+            <a href="/admin/password_change/" style="color:#fff; text-decoration:underline; margin-right:1.5em;">Αλλαγή συνθηματικού</a>
+            <a href="#" id="help-link" style="color:#fff; text-decoration:underline; margin-right:1.5em;">Βοήθεια</a>
+            <form method="post" action="/admin/logout/" style="display:inline; margin:0; padding:0;">
+                {% csrf_token %}
+                <button type="submit" class="logout-link">Αποσύνδεση</button>
+            </form>
+            <span style="color:#fff; margin-left:1.5em;">SV1SXY Ver1.0</span>
+        </div>
+    </div>
+    <!-- Help Modal -->
+    <div id="help-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index: 10000; align-items:center; justify-content:center; padding: 20px;">
+        <div style="background:#ffffff; max-width: 900px; width: 100%; max-height: 90vh; overflow:auto; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.25);">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #e5e7eb; background:#0C4B7F; color:#fff; border-top-left-radius:12px; border-top-right-radius:12px;">
+                <h3 style="margin:0; font-size:18px;">Βοήθεια</h3>
+                <button id="help-close" aria-label="Κλείσιμο" style="background:transparent; border:none; color:#fff; font-size:22px; cursor:pointer;">×</button>
+            </div>
+            <div style="padding: 20px; color:#111827; line-height:1.6;">
+                <p><strong>LogBook – Έκδοση 1</strong><br>
+                Δημιουργός: Παναγιώτης Κοττάκης  SV1SXY</p>
+                <p>Η εφαρμογή LogBook αναπτύχθηκε ως τελική εργασία για το πρόγραμμα Coding Factory 7 του Οικονομικού Πανεπιστημίου Αθηνών.<br>
+                Στόχος ήταν η δημιουργία ενός έργου με πραγματική χρησιμότητα, ώστε να αποτελέσει ένα εργαλείο και όχι απλώς μια κώδικα-εργασία που θα ξεχαστεί.</p>
+                <p>Η εφαρμογή αφορά την καταγραφή ραδιοφωνικών σταθμών (DX Radio) και επαφών ραδιοερασιτεχνών (LogBook).<br>
+                Η κοινότητα των ραδιοερασιτεχνών αριθμεί περισσότερα από 3 εκατομμύρια μέλη παγκοσμίως. Για τον λόγο αυτό, σε μελλοντικές εκδόσεις προβλέπεται υποστήριξη επιπλέον γλωσσών και νέων λειτουργιών.</p>
+                <p><strong>Η υλοποίηση βασίστηκε σε:</strong></p>
+                <ul style="margin-top:0;">
+                    <li>Python Django</li>
+                    <li>SQLite3</li>
+                    <li>Vanilla JavaScript & CSS3</li>
+                    <li>Υποστήριξη από AI εργαλεία σε επιλεγμένα σημεία, για εξοικονόμηση χρόνου.</li>
+                </ul>
+                <h4 style="margin-top:16px;">Οδηγίες Χρήσης</h4>
+                <p>Μετά την εκτέλεση του προγράμματος, μεταβείτε στη διεύθυνση:<br>
+                <code>http://127.0.0.1:8000</code></p>
+                <h4>Κύρια Μενού</h4>
+                <ol>
+                    <li>
+                        Ερωτήματα στη Βάση
+                        <ul>
+                            <li>Παρέχει τη δυνατότητα προβολής δεδομένων χωρίς να απαιτείται  χρήστης.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        Διαχειριστικό
+                        <ul>
+                            <li>Όνομα χρήστη: admin</li>
+                            <li>Συνθηματικό: 12345678</li>
+                        </ul>
+                    </li>
+                </ol>
+                <p><strong>Σημαντικό:</strong> Κατά την πρώτη χρήση αλλάξτε άμεσα το email που του χρήστη admin ώστε να λαμβάνετε OTP για επαναφορά κωδικού. Συνιστάται επίσης η αλλαγή του συνθηματικού.</p>
+                <h4>Χρήστες</h4>
+                <ul>
+                    <li>
+                        Προσθήκη: Ορισμός Ονόματος χρήστη, Συνθηματικού και Email.
+                        <ul>
+                            <li>Το email είναι απαραίτητο για την επαναφορά κωδικού.</li>
+                            <li>Δυνατότητα δημιουργίας ομάδων (λειτουργία υπό ανάπτυξη).</li>
+                            <li>Δικαιώματα χρήστη: Διαχειριστής ή χρήστης<br>
+                            Αν θέλουμε να είναι χρήστης π.χ. να μπορεί να προσθέτει μόνο σταθμούς και να μη μπορεί να διαγράφει η να διορθώνει επιλέγουμε τα ανάλογα δικαιώματα (συνήθως για συλλόγους ομάδες κλπ).</li>
+                            <li>Μπορούμε στην περίπτωση admin να επιλέξουμε με τικ τα τρια κουτάκια κάτω από το πλαίσιο που βάζουμε το email για να μην χρειαστούμε να προσθέσουμε δικαιώματα : Ενεργό , Κατάσταση προσωπικού, Κατάσταση υπερχρήστη.</li>
+                        </ul>
+                    </li>
+                    <li>Επεξεργασία / Απενεργοποίηση: Αντί για διαγραφή χρήστη, προτείνεται η απενεργοποίηση με αφαίρεση του “τικ” από το πεδίο Ενεργό.</li>
+                </ul>
+                <h4>Σταθμοί & Μπάντες</h4>
+                <ul>
+                    <li>
+                        Μπάντες:
+                        <ul>
+                            <li>Προσθήκη νέας μπάντας (π.χ. 40m η να προσθέσουμε για μελλοντική χρήση και να είναι ανενεργή έως να χρειαστεί να την ενεργοποιήσουμε).</li>
+                            <li>Αλλαγή / Ενεργοποίηση / Απενεργοποίηση.</li>
+                            <li>Προσοχή: Η διαγραφή μπάντας αφαιρεί και όλες τις σχετικές εγγραφές.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        Σταθμοί:
+                        <ul>
+                            <li>Προσθήκη νέου σταθμού ή επαφής.</li>
+                            <li>Η συχνότητα μορφοποιείται αυτόματα – προσοχή δεν απαιτείται εισαγωγή τελειών (χιλιάδων). (πριν τη αποθήκευση πραγματοποιήστε ελέγχω αν η συχνοτήτα είναι σωστή λόγο του αυτοματισμού)</li>
+                            <li>Τα μηνύματα λάθους θα σας καθοδηγούν για ορθή καταχώρηση (π.χ. αναντιστοιχία αναλογικής/ψηφιακής επαφής, δεν μπορείτε να επιλέξετε αναλογικό και FT8 που είναι ψηφιακό)</li>
+                            <li>Αλλαγή: Δυνατότητα επεξεργασίας ή διαγραφης .στα φίλτρα που υπάρχουν δεξιά  έχουμε την δυνατότητα να αναζητήσουμε εγγραφές επαφών με κριτήρια, πχ μόνο ψηφιακά και 20m.</li>
+                        </ul>
+                    </li>
+                </ul>
+                <h4>Λειτουργίες Backup & Restore</h4>
+                <ul>
+                    <li>
+                        Backup Βάσης:
+                        <ul>
+                            <li>Δημιουργεί αυτόματα αντίγραφο ασφαλείας.</li>
+                            <li>Αποθηκεύεται στον φάκελο Downloads του χρήστη (ή στο Desktop / φάκελο project εάν δεν υπάρχει).</li>
+                            <li>Το αρχείο έχει μοναδικό όνομα με timestamp: <code>db_backup_YYYYMMDD_HHMMSS.sqlite3</code></li>
+                        </ul>
+                    </li>
+                    <li>
+                        Restore Βάσης:
+                        <ul>
+                            <li>Αντικαθιστά την τρέχουσα βάση δεδομένων με το επιλεγμένο backup.</li>
+                            <li>Πραγματοποιήστε πάντα backup πριν από restore.</li>
+                            <li>Δημιουργούνται αυτόματα safety backups για μεγαλύτερη ασφάλεια.</li>
+                        </ul>
+                    </li>
+                </ul>
+                <h4>Καλές Πρακτικές</h4>
+                <ul>
+                    <li>✅ Άμεση αλλαγή email & συνθηματικού του admin.</li>
+                    <li>✅ Χρήση απενεργοποίησης αντί για διαγραφή χρηστών.</li>
+                    <li>✅ Συχνά backup πριν από κάθε restore.</li>
+                </ul>
+                <h4>Επικοινωνία</h4>
+                <p>Για προτάσεις ή παρατηρήσεις μπορείτε να επικοινωνείτε στο email:<br>
+                📧 <a href="mailto:sv1sxy@gmail.com">sv1sxy@gmail.com</a></p>
+                <p><em>Έκδοση 1</em></p>
+            </div>
+        </div>
+    </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var helpLink = document.getElementById('help-link');
+        var helpModal = document.getElementById('help-modal');
+        var helpClose = document.getElementById('help-close');
+        if (helpLink && helpModal && helpClose) {
+            helpLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                helpModal.style.display = 'flex';
+            });
+            helpClose.addEventListener('click', function() {
+                helpModal.style.display = 'none';
+            });
+            helpModal.addEventListener('click', function(e) {
+                if (e.target === helpModal) {
+                    helpModal.style.display = 'none';
+                }
+            });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    helpModal.style.display = 'none';
+                }
+            });
+        }
+    });
+    </script>
+    {% if request.path == '/admin/' %}
+    <div class="breadcrumbs" style="background: #fff; padding: 10px 40px; border-bottom: 1px solid #e0e0e0; color: #0C4B7F; text-align: left;">
+        <a href="/">Αρχική</a>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/admin_login.css' %}">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        #nav-sidebar {
+            display: none !important;
+        }
+        #content {
+            margin-left: 0 !important;
+        }
+        
+        /* Κρύβουμε το κουμπί toggle-nav-sidebar από παντού */
+        .sticky.toggle-nav-sidebar,
+        #toggle-nav-sidebar,
+        button[aria-label="Εναλλαγή προβολής πλοήγησης"] {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+        
+        /* Κάνουμε τις λέξεις "Προσθήκη" κόκκινες και bold */
+        a[href*="add/"],
+        .addlink,
+        .object-tools a[href*="add/"] {
+            color: #dc3545 !important;
+            font-weight: bold !important;
+        }
+        
+        a[href*="add/"]:hover,
+        .addlink:hover,
+        .object-tools a[href*="add/"]:hover {
+            color: #c82333 !important;
+            font-weight: bold !important;
+        }
+        
+        /* Βελτίωση  header */
+        #custom-admin-header {
+            background: #0C4B7F !important;
+            color: #fff !important;
+            padding: 1.2em 2em !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            flex-wrap: nowrap !important;
+            white-space: nowrap !important;
+        }
+        
+        #custom-admin-header > div:first-child {
+            font-size: 1.25em !important;
+            font-weight: 500 !important;
+            margin-right: 2em !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            flex-shrink: 0 !important;
+        }
+        
+        #custom-admin-header > div:last-child {
+            display: flex !important;
+            align-items: center !important;
+            gap: 1.5em !important;
+            flex-shrink: 0 !important;
+            white-space: nowrap !important;
+        }
+        
+        #custom-admin-header a {
+            color: #fff !important;
+            text-decoration: underline !important;
+            font-weight: 500 !important;
+            transition: color 0.3s ease !important;
+            white-space: nowrap !important;
+        }
+        
+        #custom-admin-header a:hover {
+            text-decoration: none !important;
+            color: #ffe082 !important;
+        }
+        
+        .logout-link {
+            background: none !important;
+            border: none !important;
+            color: #fff !important;
+            text-decoration: underline !important;
+            cursor: pointer !important;
+            font: inherit !important;
+            padding: 0 !important;
+            font-size: 0.9em !important;
+            font-weight: 500 !important;
+            transition: color 0.3s ease !important;
+            white-space: nowrap !important;
+        }
+        
+        .logout-link:hover {
+            color: #ffe082 !important;
+            text-decoration: none !important;
+        }
+        
+        div.breadcrumbs {
+            background: #fff !important;
+            padding: 10px 40px !important;
+            border-bottom: 1px solid #e0e0e0 !important;
+            color: #0C4B7F !important;
+            text-align: left !important;
+        }
+        
+        .breadcrumbs a {
+            color: #0C4B7F !important;
+            text-decoration: underline !important;
+            transition: color 0.15s !important;
+        }
+        
+        .breadcrumbs a:visited {
+            color: #0C4B7F !important;
+        }
+        
+        .breadcrumbs a:hover, .breadcrumbs a:active, .breadcrumbs a:focus {
+            text-decoration: none !important;
+            color: #1666a3 !important;
+            background: #e6f0fa !important;
+            border-radius: 4px !important;
+            outline: none !important;
+        }
+        
+        .breadcrumbs span {
+            color: #888 !important;
+            margin: 0 0.5em !important;
+        }
+        
+        /* Εφαρμογή του gradient background σε όλες τις σελίδες διαχειριστικού */
+        #content {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px) !important;
+            border-radius: 20px !important;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.2) !important;
+            margin: 20px 0 20px 0 !important;
+            margin-left: 0 !important;
+            padding: 3em !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+        
+        /* Εφαρμογή margin-left σε όλες τις σελίδες διαχειριστικού */
+        #content-main {
+            margin-left: 0 !important;
+        }
+        
+        /* Επιπλέον padding για τα περιεχόμενα */
+        #content > div {
+            padding-left: 0 !important;
+            padding-right: 29px !important;
+        }
+        
+        /* Κρύβουμε τα ανεπιθύμητα στοιχεία στο κάτω αριστερά */
+        .paginator {
+            display: none !important;
+        }
+        
+        /* Βελτίωση  tables */
+        table {
+            margin-left: 0 !important;
+            margin-right: 29px !important;
+        }
+        
+        /* Βελτίωση  forms */
+        form {
+            padding-left: 0 !important;
+            padding-right: 29px !important;
+        }
+        
+        /* Βελτίωση  checkboxes και λίστες */
+        .results {
+            padding-left: 0 !important;
+            padding-right: 29px !important;
+        }
+        
+        .results table {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+        
+        /* Κρύβουμε στοιχεία */
+        .paginator, 
+        .actions,
+        .object-tools {
+            display: none !important;
+        }
+        
+        /* Βελτίωση action button */
+        .submit-row {
+            padding-left: 0 !important;
+            padding-right: 29px !important;
+        }
+        
+        /* Βελτίωση στακουμπιά και φόρμες */
+        .button, input[type="submit"], input[type="button"] {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+            border: none !important;
+            border-radius: 8px !important;
+            color: white !important;
+            padding: 10px 20px !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 4px 15px rgba(30, 60, 114, 0.3) !important;
+        }
+        
+        .button:hover, input[type="submit"]:hover, input[type="button"]:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 25px rgba(30, 60, 114, 0.4) !important;
+        }
+        
+        /* Βελτίωση πεδία εισόδου */
+        input[type="text"], input[type="password"], input[type="email"], textarea, select {
+            border: 2px solid #e0e0e0 !important;
+            border-radius: 8px !important;
+            padding: 10px !important;
+            transition: border-color 0.3s ease !important;
+        }
+        
+        input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus, textarea:focus, select:focus {
+            border-color: #1e3c72 !important;
+            outline: none !important;
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1) !important;
+        }
+        
+        /* CSS για το admin login page - πλαίσιο περιγραφής */
+        .login #content {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px) !important;
+            border-radius: 20px !important;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.2) !important;
+            margin: 20px auto !important;
+            padding: 3em !important;
+            max-width: 600px !important;
+            width: 90% !important;
+        }
+        
+        /* Μεγαλώνω το πλαίσιο περιγραφής στο login */
+        .login .form-row {
+            margin-bottom: 20px !important;
+        }
+        
+        .login .form-row label {
+            font-size: 16px !important;
+            font-weight: bold !important;
+            color: #333 !important;
+            margin-bottom: 8px !important;
+            display: block !important;
+        }
+        
+        .login .form-row input[type="text"],
+        .login .form-row input[type="password"] {
+            width: 100% !important;
+            padding: 15px !important;
+            font-size: 16px !important;
+            border: 2px solid #e0e0e0 !important;
+            border-radius: 8px !important;
+            box-sizing: border-box !important;
+        }
+        
+        .login .form-row input[type="text"]:focus,
+        .login .form-row input[type="password"]:focus {
+            border-color: #1e3c72 !important;
+            outline: none !important;
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1) !important;
+        }
+        
+        /*  κουμπί login */
+        .login .submit-row input[type="submit"] {
+            width: 60% !important;
+            padding: 12px !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+            border: none !important;
+            border-radius: 8px !important;
+            color: white !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 4px 15px rgba(30, 60, 114, 0.3) !important;
+            margin-right: 10px !important;
+            display: inline-block !important;
+        }
+        
+        .login .submit-row input[type="submit"]:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 25px rgba(30, 60, 114, 0.4) !important;
+        }
+        
+        /* Προσθέτο το κουμπί Αρχική */
+        .login .submit-row {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: 10px !important;
+            margin-top: 30px !important;
+            padding: 0 !important;
+        }
+        
+        .home-button {
+            width: 35% !important;
+            padding: 12px !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+            border: none !important;
+            border-radius: 8px !important;
+            color: white !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3) !important;
+            text-decoration: none !important;
+            display: inline-block !important;
+            text-align: center !important;
+            line-height: 1.2 !important;
+        }
+        
+        .home-button:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4) !important;
+            text-decoration: none !important;
+            color: white !important;
+        }
+        
+        /* τίτλος του login */
+        .login h1 {
+            font-size: 28px !important;
+            font-weight: bold !important;
+            color: #1e3c72 !important;
+            text-align: center !important;
+            margin-bottom: 30px !important;
+        }
+        
+        /* Βελτίωση error messages */
+        .login .errornote {
+            background: #f8d7da !important;
+            color: #721c24 !important;
+            padding: 15px !important;
+            border-radius: 8px !important;
+            margin-bottom: 20px !important;
+            font-size: 14px !important;
+        }
+        
+        /* Βελτίωση  help text */
+        .login .help {
+            font-size: 14px !important;
+            color: #666 !important;
+            margin-top: 8px !important;
+        }
+        
+        /* Responsive design για το login */
+        @media (max-width: 768px) {
+            .login #content {
+                margin: 10px auto !important;
+                padding: 2em !important;
+                width: 95% !important;
+            }
+            
+            .login h1 {
+                font-size: 24px !important;
+            }
+            
+            .login .form-row input[type="text"],
+            .login .form-row input[type="password"] {
+                padding: 12px !important;
+                font-size: 16px !important;
+            }
+            
+            .login .submit-row {
+                flex-direction: column !important;
+                gap: 15px !important;
+            }
+            
+            .login .submit-row input[type="submit"],
+            .home-button {
+                width: 100% !important;
+                padding: 12px !important;
+                font-size: 16px !important;
+            }
+        }
+        
+        /* Για mobile συσκευές */
+        @media (max-width: 768px) {
+            #custom-admin-header {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 10px !important;
+            }
+            
+            #custom-admin-header > div:first-child {
+                font-size: 1.1em !important;
+                margin-right: 0 !important;
+            }
+            
+            #custom-admin-header > div:last-child {
+                font-size: 0.9em !important;
+                gap: 1em !important;
+            }
+        }
+    </style>
+{% endblock %} 

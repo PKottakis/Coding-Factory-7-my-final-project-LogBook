@@ -1,0 +1,861 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <style>
+        /* Modern Design με καλύτερα χρώματα */
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #ecf0f1;
+            --border-color: #bdc3c7;
+            --text-color: #2c3e50;
+            --shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* OVERRIDE ΤΩΝ BASE_SITE.HTML STYLES - ΠΙΟ ΔΥΝΑΤΑ */
+        #content,
+        #content-main,
+        .content {
+            background: white !important;
+            backdrop-filter: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+            padding: 20px !important;
+        }
+
+        /* Container για τα δίπλα-δίπλα fieldsets */
+        .fieldsets-row {
+            display: flex !important;
+            gap: 16px !important;
+            margin-bottom: 16px !important;
+            flex-wrap: nowrap !important;
+            background: none !important;
+            padding: 0 !important;
+            border: none !important;
+            align-items: flex-start !important;
+        }
+
+        .fieldsets-row fieldset {
+            flex: 1 1 0 !important;
+            min-width: 0 !important;
+            max-width: 100%;
+            margin: 0 !important;
+            padding: 12px 16px !important;
+        }
+
+        /* Τα πεδία της βασικής πληροφορίας και του modulation σε μία σειρά */
+        .basic-info-fields-row, .modulation-fields-row {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 0;
+        }
+        .basic-info-fields-row > div, .modulation-fields-row > div {
+            flex: 1 1 0;
+            min-width: 120px;
+        }
+        .checkbox-grid {
+            display: flex !important;
+            flex-direction: row !important;
+            gap: 12px !important;
+            margin-top: 0 !important;
+        }
+        .checkbox-item {
+            display: flex !important;
+            align-items: center !important;
+            padding: 0 8px !important;
+            background: none !important;
+            border-radius: 6px !important;
+            transition: all 0.3s ease !important;
+        }
+
+        /* Βασικό styling για τη φόρμα */
+        .form-row input,
+        .form-row select,
+        .form-row textarea,
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            font-size: 16px !important;
+            border: 2px solid var(--border-color) !important;
+            border-radius: 8px !important;
+            padding: 12px 16px !important;
+            transition: all 0.3s ease !important;
+            background: white !important;
+        }
+
+        .form-row input:focus,
+        .form-row select:focus,
+        .form-row textarea:focus,
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--secondary-color) !important;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1) !important;
+            outline: none !important;
+        }
+
+        .form-row label,
+        label {
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            color: var(--text-color) !important;
+            margin-bottom: 8px !important;
+            display: block !important;
+        }
+
+        .form-row .help,
+        .help {
+            font-size: 12px !important;
+            color: #7f8c8d !important;
+            margin-top: 4px !important;
+        }
+
+        /* Fieldset styling */
+        fieldset,
+        fieldset.module {
+            background: white !important;
+            border: 2px solid var(--border-color) !important;
+            border-radius: 12px !important;
+            margin-bottom: 20px !important;
+            padding: 20px !important;
+            box-shadow: var(--shadow) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        fieldset:hover,
+        fieldset.module:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+        }
+
+        fieldset h2,
+        fieldset.module h2 {
+            font-size: 18px !important;
+            font-weight: 700 !important;
+            color: var(--primary-color) !important;
+            margin-bottom: 16px !important;
+            padding-bottom: 8px !important;
+            border-bottom: 2px solid var(--light-bg) !important;
+        }
+
+        /* Ειδικά χρώματα για κάθε fieldset - όλα μαύρα */
+        .basic-info-fieldset,
+        fieldset.basic-info-fieldset,
+        .modulation-fieldset,
+        fieldset.modulation-fieldset,
+        .type-fieldset,
+        fieldset.type-fieldset,
+        .decoding-fieldset,
+        fieldset.decoding-fieldset,
+        .rx-tx-fieldset,
+        fieldset.rx-tx-fieldset,
+        .datetime-fieldset,
+        fieldset.datetime-fieldset {
+            border-color: #111 !important;
+            border-width: 3px !important;
+        }
+
+        /* Checkbox styling */
+        .form-row input[type="checkbox"],
+        input[type="checkbox"] {
+            transform: scale(1.3) !important;
+            margin-right: 12px !important;
+            accent-color: var(--secondary-color) !important;
+        }
+
+        /* Ειδικό styling για τα βασικά πεδία */
+        #id_Frequency,
+        input#id_Frequency {
+            width: 200px !important;
+            font-size: 18px !important;
+            font-weight: 600 !important;
+            text-align: center !important;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+        }
+
+        #id_Callsign_Station,
+        input#id_Callsign_Station {
+            width: 300px !important;
+            font-size: 18px !important;
+            font-weight: 600 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+        }
+
+        #id_band,
+        select#id_band {
+            width: 200px !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            text-align: center !important;
+        }
+
+        #id_RSV, #id_TRS,
+        input#id_RSV, input#id_TRS {
+            width: 100px !important;
+            font-size: 18px !important;
+            font-weight: 700 !important;
+            text-align: center !important;
+            background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%) !important;
+        }
+
+        #id_Date, #id_Time,
+        input#id_Date, input#id_Time {
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            text-align: center !important;
+            background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%) !important;
+        }
+
+        /* Responsive Design */
+        .form-row {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 20px !important;
+            margin-bottom: 16px !important;
+            align-items: flex-start !important;
+        }
+
+        .form-row > div {
+            flex: 1 !important;
+            min-width: 250px !important;
+        }
+
+        /* Grid layout για τα checkboxes */
+        .checkbox-grid {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+            gap: 12px !important;
+            margin-top: 12px !important;
+        }
+
+        .checkbox-item {
+            display: flex !important;
+            align-items: center !important;
+            padding: 8px 12px !important;
+            background: var(--light-bg) !important;
+            border-radius: 6px !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .checkbox-item:hover {
+            background: #d5dbdb !important;
+            transform: translateY(-1px) !important;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 8px !important;
+        }
+
+        .checkbox-item label {
+            margin: 0 !important;
+            font-weight: 500 !important;
+            cursor: pointer !important;
+        }
+
+        /* Submit buttons styling */
+        .submit-row {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #34495e 100%) !important;
+            border-radius: 12px !important;
+            padding: 20px !important;
+            margin-top: 20px !important;
+            box-shadow: var(--shadow) !important;
+        }
+
+        .submit-row input[type="submit"],
+        input[type="submit"] {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #2980b9 100%) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 8px !important;
+            padding: 12px 24px !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            margin-right: 12px !important;
+        }
+
+        .submit-row input[type="submit"]:hover,
+        input[type="submit"]:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+        }
+
+        .submit-row input[type="submit"].default,
+        input[type="submit"].default {
+            background: linear-gradient(135deg, var(--success-color) 0%, #229954 100%) !important;
+        }
+
+        /* Error styling */
+        .errorlist {
+            background: #fff5f5 !important;
+            border: 1px solid #fed7d7 !important;
+            border-radius: 6px !important;
+            padding: 8px 12px !important;
+            margin: 8px 0 !important;
+            color: #c53030 !important;
+            font-size: 14px !important;
+        }
+
+        /* Media queries για responsive design */
+        @media (max-width: 1200px) {
+            .fieldsets-row {
+                flex-direction: column !important;
+            }
+            
+            .fieldsets-row fieldset {
+                min-width: unset !important;
+            }
+            
+            .form-row {
+                flex-direction: column !important;
+            }
+            
+            .form-row > div {
+                width: 100% !important;
+                min-width: unset !important;
+            }
+            
+            .checkbox-grid {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            fieldset {
+                padding: 16px !important;
+                margin-bottom: 16px !important;
+            }
+            
+            fieldset h2 {
+                font-size: 16px !important;
+            }
+            
+            .form-row input,
+            .form-row select,
+            .form-row textarea {
+                font-size: 14px !important;
+                padding: 10px 12px !important;
+            }
+            
+            .checkbox-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)) !important;
+                gap: 8px !important;
+            }
+            
+            .submit-row {
+                padding: 16px !important;
+            }
+            
+            .submit-row input[type="submit"] {
+                font-size: 14px !important;
+                padding: 10px 20px !important;
+                margin-bottom: 8px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            fieldset {
+                padding: 12px !important;
+            }
+            
+            .form-row input,
+            .form-row select,
+            .form-row textarea {
+                font-size: 13px !important;
+                padding: 8px 10px !important;
+            }
+            
+            .checkbox-grid {
+                grid-template-columns: 1fr !important;
+            }
+            
+            .submit-row input[type="submit"] {
+                width: 100% !important;
+                margin-right: 0 !important;
+                margin-bottom: 8px !important;
+            }
+        }
+
+        /* Εξασφαλίζουμε ότι τα inputs προσαρμόζονται στο container */
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        /* Container για τα δίπλα-δίπλα fieldsets (πρώτη σειρά) */
+        .fieldsets-row-1 {
+            display: flex !important;
+            gap: 16px !important;
+            margin-bottom: 16px !important;
+            flex-wrap: nowrap !important;
+            background: none !important;
+            padding: 0 !important;
+            border: none !important;
+            align-items: flex-start !important;
+        }
+        .fieldsets-row-1 fieldset {
+            flex: 1 1 0 !important;
+            min-width: 0 !important;
+            max-width: 100%;
+            margin: 0 !important;
+            padding: 12px 16px !important;
+        }
+        /* Container για τα δίπλα-δίπλα fieldsets (δεύτερη σειρά) */
+        .fieldsets-row-2 {
+            display: flex !important;
+            gap: 16px !important;
+            margin-bottom: 16px !important;
+            flex-wrap: nowrap !important;
+            background: none !important;
+            padding: 0 !important;
+            border: none !important;
+            align-items: flex-start !important;
+        }
+        .fieldsets-row-2 fieldset {
+            flex: 1 1 0 !important;
+            min-width: 0 !important;
+            max-width: 100%;
+            margin: 0 !important;
+            padding: 12px 16px !important;
+        }
+        /* Container για τα δίπλα-δίπλα fieldsets (τρίτη σειρά) */
+        .fieldsets-row-3 {
+            display: flex !important;
+            gap: 16px !important;
+            margin-bottom: 16px !important;
+            flex-wrap: nowrap !important;
+            background: none !important;
+            padding: 0 !important;
+            border: none !important;
+            align-items: flex-start !important;
+        }
+        .fieldsets-row-3 fieldset {
+            flex: 1 1 0 !important;
+            min-width: 0 !important;
+            max-width: 100%;
+            margin: 0 !important;
+            padding: 12px 16px !important;
+        }
+        @media (max-width: 900px) {
+            .fieldsets-row-1, .fieldsets-row-2, .fieldsets-row-3 {
+                flex-direction: column !important;
+            }
+        }
+        /* Μείωση ύψους και εσωτερικών κενών για το Basic Information */
+        .basic-info-fieldset {
+            padding-top: 8px !important;
+            padding-bottom: 8px !important;
+        }
+        .basic-info-fieldset h2 {
+            margin-bottom: 8px !important;
+            padding-bottom: 4px !important;
+        }
+        .basic-info-fields-row {
+            gap: 8px !important;
+        }
+        .basic-info-fields-row > div {
+            margin-bottom: 0 !important;
+            padding: 0 !important;
+        }
+        .basic-info-fieldset .form-row {
+            margin-bottom: 0 !important;
+            padding: 0 !important;
+        }
+        .basic-info-fieldset input,
+        .basic-info-fieldset select {
+            padding-top: 6px !important;
+            padding-bottom: 6px !important;
+            font-size: 15px !important;
+        }
+        /* Βελτιωμένη στοίχιση για όλα τα fieldsets */
+        .fieldsets-row-1 {
+            align-items: stretch !important;
+        }
+        .basic-info-fieldset .basic-info-fields-row {
+            flex-direction: row !important;
+            gap: 12px !important;
+        }
+        .basic-info-fieldset .basic-info-fields-row > div {
+            width: auto !important;
+        }
+        .type-fieldset .checkbox-grid {
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 16px !important;
+            height: 100%;
+            justify-content: center;
+        }
+        .type-fieldset {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .fieldsets-row-1 fieldset {
+            min-height: 180px;
+        }
+        /* Βελτίωση στοίχισης και για τα υπόλοιπα fieldsets αν χρειαστεί */
+        .fieldsets-row-2, .fieldsets-row-3 {
+            align-items: stretch !important;
+        }
+        .fieldsets-row-2 fieldset, .fieldsets-row-3 fieldset {
+            min-height: 180px;
+        }
+        /* Κεντράρισμα και σταθερό πλάτος για τη φόρμα */
+        /* ΑΦΑΙΡΕΘΗΚΕ: #content-main > form, .fieldsets-row-1, .fieldsets-row-2, .fieldsets-row-3, min-width, max-width, width, box-sizing, responsive @media (max-width: 900px) */
+        /* Fieldsets να χωράνε χωρίς scroll */
+        .fieldsets-row-1, .fieldsets-row-2, .fieldsets-row-3 {
+            gap: 8px !important;
+        }
+        .fieldsets-row-1 fieldset,
+        .fieldsets-row-2 fieldset,
+        .fieldsets-row-3 fieldset {
+            min-width: 180px !important;
+            padding: 8px 8px !important;
+            flex-shrink: 1 !important;
+        }
+        .form-row input,
+        .form-row select,
+        .form-row textarea {
+            min-width: 0 !important;
+            max-width: 100% !important;
+            padding: 6px 8px !important;
+            font-size: 15px !important;
+        }
+        .checkbox-grid {
+            gap: 6px !important;
+        }
+        .checkbox-item {
+            padding: 4px 6px !important;
+        }
+        /* Responsive: σε μικρές οθόνες να γίνονται 100% */
+        @media (max-width: 1200px) {
+            .fieldsets-row-1, .fieldsets-row-2, .fieldsets-row-3 {
+                flex-direction: column !important;
+            }
+        }
+        /* Μείωση ύψους για Basic Information και Τύπος */
+        .basic-info-fieldset, .type-fieldset {
+            padding-top: 4px !important;
+            padding-bottom: 4px !important;
+        }
+        .basic-info-fieldset h2, .type-fieldset h2 {
+            margin-bottom: 4px !important;
+            padding-bottom: 2px !important;
+            font-size: 16px !important;
+        }
+        .basic-info-fields-row, .type-fieldset .checkbox-grid {
+            gap: 6px !important;
+        }
+        .basic-info-fields-row > div, .type-fieldset .checkbox-item {
+            margin-bottom: 0 !important;
+            padding: 0 !important;
+        }
+        .basic-info-fieldset input,
+        .basic-info-fieldset select,
+        .type-fieldset input,
+        .type-fieldset select {
+            padding-top: 4px !important;
+            padding-bottom: 4px !important;
+            font-size: 14px !important;
+        }
+        /* Τα πεδία του Basic Information σε μία οριζόντια σειρά */
+        .basic-info-fields-row {
+            display: flex !important;
+            flex-direction: row !important;
+            gap: 8px !important;
+            align-items: flex-end !important;
+            margin-bottom: 0 !important;
+        }
+        .basic-info-fields-row > div {
+            flex: 1 1 0;
+            min-width: 80px;
+            margin-bottom: 0 !important;
+            padding: 0 !important;
+            width: auto !important;
+        }
+        .basic-info-fieldset label {
+            margin-bottom: 2px !important;
+        }
+        .basic-info-fieldset input,
+        .basic-info-fieldset select {
+            margin-bottom: 0 !important;
+        }
+        /* Related widgets για το πεδίο Μπάντα να είναι δίπλα στο select */
+        .related-widget-wrapper {
+            display: flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+        }
+        .related-widget-wrapper select {
+            flex: 1 !important;
+            margin-right: 4px !important;
+        }
+        .related-widget-wrapper a {
+            display: inline-block !important;
+            margin: 0 !important;
+            padding: 2px 4px !important;
+            font-size: 12px !important;
+        }
+        .related-widget-wrapper a.add-related,
+        .related-widget-wrapper a.change-related,
+        .related-widget-wrapper a.delete-related {
+            text-decoration: none !important;
+            border: 1px solid #ccc !important;
+            border-radius: 3px !important;
+            background: #f8f9fa !important;
+        }
+        /* Responsive/Flexible φόρμα */
+        .fieldsets-row-1, .fieldsets-row-2, .fieldsets-row-3 {
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+        }
+        .fieldsets-row-1 fieldset,
+        .fieldsets-row-2 fieldset,
+        .fieldsets-row-3 fieldset {
+            flex: 1 1 300px !important;
+            min-width: 250px !important;
+            max-width: 100% !important;
+        }
+        .basic-info-fields-row {
+            flex-wrap: wrap !important;
+            gap: 4px !important;
+        }
+        .basic-info-fields-row > div {
+            flex: 1 1 120px !important;
+            min-width: 100px !important;
+        }
+        .checkbox-grid {
+            flex-wrap: wrap !important;
+            gap: 4px !important;
+        }
+        .checkbox-item {
+            flex: 0 1 auto !important;
+            min-width: 80px !important;
+        }
+        /* Σε πολύ μικρές οθόνες */
+        @media (max-width: 768px) {
+            .fieldsets-row-1, .fieldsets-row-2, .fieldsets-row-3 {
+                flex-direction: column !important;
+            }
+            .fieldsets-row-1 fieldset,
+            .fieldsets-row-2 fieldset,
+            .fieldsets-row-3 fieldset {
+                flex: 1 1 100% !important;
+                min-width: 100% !important;
+            }
+            .basic-info-fields-row {
+                flex-direction: column !important;
+            }
+            .basic-info-fields-row > div {
+                flex: 1 1 100% !important;
+                min-width: 100% !important;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content_title %}
+    {% if original %}
+        <h1 style="color: var(--primary-color); font-size: 24px; font-weight: 700; margin-bottom: 20px;">
+            ✏️ Επεξεργασία Σταθμού: {{ original.Callsign_Station }}
+        </h1>
+    {% else %}
+        <h1 style="color: var(--primary-color); font-size: 24px; font-weight: 700; margin-bottom: 20px;">
+            ➕ Προσθήκη Νέου Σταθμού
+        </h1>
+    {% endif %}
+{% endblock %}
+
+{% block object-tools-items %}
+    {% if original %}
+        <li>
+            <a href="{% url 'admin:station_station_delete' original.id %}" class="deletelink" 
+               style="background: var(--danger-color); color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none;">
+                🗑️ Διαγραφή Σταθμού
+            </a>
+        </li>
+    {% endif %}
+{% endblock %}
+
+{% block field_sets %}
+    <div class="fieldsets-row-1">
+        <fieldset class="module aligned basic-info-fieldset">
+            <h2>Basic Information</h2>
+            <div class="basic-info-fields-row">
+                <div>
+                    {{ adminform.form.band.errors }}
+                    {{ adminform.form.band.label_tag }}
+                    {{ adminform.form.band }}
+                    {% if adminform.form.band.help_text %}
+                        <p class="help">{{ adminform.form.band.help_text|safe }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    {{ adminform.form.Frequency.errors }}
+                    {{ adminform.form.Frequency.label_tag }}
+                    {{ adminform.form.Frequency }}
+                    {% if adminform.form.Frequency.help_text %}
+                        <p class="help">{{ adminform.form.Frequency.help_text|safe }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    {{ adminform.form.Callsign_Station.errors }}
+                    {{ adminform.form.Callsign_Station.label_tag }}
+                    {{ adminform.form.Callsign_Station }}
+                    {% if adminform.form.Callsign_Station.help_text %}
+                        <p class="help">{{ adminform.form.Callsign_Station.help_text|safe }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </fieldset>
+        <fieldset class="module aligned type-fieldset">
+            <h2>🔊 Τύπος</h2>
+            <div class="checkbox-grid">
+                <div class="checkbox-item">
+                    {{ adminform.form.Analog }}
+                    {{ adminform.form.Analog.label_tag }}
+                </div>
+                <div class="checkbox-item">
+                    {{ adminform.form.Digital }}
+                    {{ adminform.form.Digital.label_tag }}
+                </div>
+            </div>
+        </fieldset>
+    </div>
+    <div class="fieldsets-row-2">
+        <fieldset class="module aligned modulation-fieldset">
+            <h2>📡 Modulation</h2>
+            <div class="modulation-fields-row checkbox-grid">
+                <div class="checkbox-item">
+                    {{ adminform.form.AM }}
+                    {{ adminform.form.AM.label_tag }}
+                </div>
+                <div class="checkbox-item">
+                    {{ adminform.form.FM }}
+                    {{ adminform.form.FM.label_tag }}
+                </div>
+                <div class="checkbox-item">
+                    {{ adminform.form.USB }}
+                    {{ adminform.form.USB.label_tag }}
+                </div>
+                <div class="checkbox-item">
+                    {{ adminform.form.LSB }}
+                    {{ adminform.form.LSB.label_tag }}
+                </div>
+                <div class="checkbox-item">
+                    {{ adminform.form.SSB }}
+                    {{ adminform.form.SSB.label_tag }}
+                </div>
+                <div class="checkbox-item">
+                    {{ adminform.form.CW }}
+                    {{ adminform.form.CW.label_tag }}
+                </div>
+            </div>
+        </fieldset>
+    <fieldset class="module aligned decoding-fieldset">
+        <h2>💻 Τύποι Decoding (μόνο για Digital)</h2>
+        <div class="checkbox-grid">
+            <div class="checkbox-item">
+                {{ adminform.form.C4FM }}
+                {{ adminform.form.C4FM.label_tag }}
+            </div>
+            <div class="checkbox-item">
+                {{ adminform.form.DMR }}
+                {{ adminform.form.DMR.label_tag }}
+            </div>
+            <div class="checkbox-item">
+                {{ adminform.form.DSTAR }}
+                {{ adminform.form.DSTAR.label_tag }}
+            </div>
+            <div class="checkbox-item">
+                {{ adminform.form.FAX }}
+                {{ adminform.form.FAX.label_tag }}
+            </div>
+            <div class="checkbox-item">
+                {{ adminform.form.FSK31 }}
+                {{ adminform.form.FSK31.label_tag }}
+            </div>
+            <div class="checkbox-item">
+                {{ adminform.form.FT4 }}
+                {{ adminform.form.FT4.label_tag }}
+            </div>
+            <div class="checkbox-item">
+                {{ adminform.form.FT8 }}
+                {{ adminform.form.FT8.label_tag }}
+            </div>
+            <div class="checkbox-item">
+                {{ adminform.form.JT65 }}
+                {{ adminform.form.JT65.label_tag }}
+            </div>
+            <div class="checkbox-item">
+                {{ adminform.form.JT9 }}
+                {{ adminform.form.JT9.label_tag }}
+            </div>
+            <div class="checkbox-item">
+                {{ adminform.form.RTTY }}
+                {{ adminform.form.RTTY.label_tag }}
+            </div>
+            <div class="checkbox-item">
+                {{ adminform.form.SSTV }}
+                {{ adminform.form.SSTV.label_tag }}
+            </div>
+        </div>
+    </fieldset>
+    </div>
+    <div class="fieldsets-row-3">
+    <fieldset class="module aligned rx-tx-fieldset">
+        <h2>📻 Λήψη - Μετάδοση</h2>
+        <div class="form-row">
+            <div>
+                {{ adminform.form.RSV.errors }}
+                {{ adminform.form.RSV.label_tag }}
+                {{ adminform.form.RSV }}
+            </div>
+            <div>
+                {{ adminform.form.TRS.errors }}
+                {{ adminform.form.TRS.label_tag }}
+                {{ adminform.form.TRS }}
+            </div>
+        </div>
+    </fieldset>
+    <fieldset class="module aligned datetime-fieldset">
+        <h2>📅 Ημερομηνία & Ώρα</h2>
+        <div class="form-row">
+            <div>
+                {{ adminform.form.Date.errors }}
+                {{ adminform.form.Date.label_tag }}
+                {{ adminform.form.Date }}
+            </div>
+            <div>
+                {{ adminform.form.Time.errors }}
+                {{ adminform.form.Time.label_tag }}
+                {{ adminform.form.Time }}
+            </div>
+        </div>
+    </fieldset>
+    </div>
+{% endblock %}
+
+{% block submit_buttons_bottom %}
+    <div class="submit-row">
+        <input type="submit" value="💾 Αποθήκευση" class="default" name="_save">
+        {% if original %}
+            <input type="submit" value="✏️ Αποθήκευση και συνέχεια επεξεργασίας" name="_continue">
+        {% endif %}
+        <input type="submit" value="➕ Αποθήκευση και προσθήκη νέας" name="_addanother">
+    </div>
+{% endblock %} 

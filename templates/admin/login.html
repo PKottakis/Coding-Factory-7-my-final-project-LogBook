@@ -1,0 +1,307 @@
+{% extends "admin/login.html" %}
+
+{% block title %}Σύνδεση - Διαχειριστικό{% endblock %}
+{% load i18n static %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/admin_login.css' %}">
+    <style>
+        /* Μικρύνουμε το κουμπί Σύνδεση */
+        .login .submit-row input[type="submit"] {
+            width: 60% !important;
+            padding: 12px !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+            border: none !important;
+            border-radius: 8px !important;
+            color: white !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 4px 15px rgba(30, 60, 114, 0.3) !important;
+            margin-right: 10px !important;
+            display: inline-block !important;
+        }
+        
+        .login .submit-row input[type="submit"]:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 25px rgba(30, 60, 114, 0.4) !important;
+        }
+        
+        /* Προσθέτουμε το κουμπί Αρχική */
+        .login .submit-row {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: 10px !important;
+            margin-top: 30px !important;
+            padding: 0 !important;
+        }
+        
+        .home-button {
+            width: 35% !important;
+            padding: 12px !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+            border: none !important;
+            border-radius: 8px !important;
+            color: white !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3) !important;
+            text-decoration: none !important;
+            display: inline-block !important;
+            text-align: center !important;
+            line-height: 1.2 !important;
+        }
+        
+        .home-button:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4) !important;
+            text-decoration: none !important;
+            color: white !important;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .login #content-main {
+                margin: 10px auto !important;
+                padding: 2em !important;
+                width: 95% !important;
+            }
+            
+            .login h1 {
+                font-size: 24px !important;
+            }
+            
+            .login .form-row input[type="text"],
+            .login .form-row input[type="password"] {
+                padding: 12px !important;
+                font-size: 16px !important;
+            }
+            
+            .login .submit-row {
+                flex-direction: column !important;
+                gap: 15px !important;
+            }
+            
+            .login .submit-row input[type="submit"],
+            .home-button {
+                width: 100% !important;
+                padding: 12px !important;
+                font-size: 16px !important;
+            }
+        }
+        
+        /* Βελτίωση του στυλ για το h1 */
+        .login h1 {
+            font-size: 28px !important;
+            font-weight: bold !important;
+            color: #1e3c72 !important;
+            text-align: center !important;
+            margin-bottom: 30px !important;
+        }
+        
+        /* Βελτίωση του στυλ για τα labels */
+        .login .form-row label {
+            font-size: 16px !important;
+            font-weight: bold !important;
+            color: #333 !important;
+            margin-bottom: 8px !important;
+            display: block !important;
+            text-align: left !important;
+        }
+        
+        /* Βελτίωση του στυλ για τα input fields - ΚΑΝΟΥΜΕ ΤΑ ΠΕΡΙΓΡΑΜΜΑΤΑ ΠΙΟ ΟΡΑΤΑ */
+        .login .form-row input[type="text"],
+        .login .form-row input[type="password"] {
+            width: 100% !important;
+            padding: 15px !important;
+            font-size: 16px !important;
+            border: 3px solid #1e3c72 !important;
+            border-radius: 8px !important;
+            box-sizing: border-box !important;
+            background-color: #ffffff !important;
+            box-shadow: 0 2px 8px rgba(30, 60, 114, 0.1) !important;
+            text-align: left !important;
+        }
+        
+        .login .form-row input[type="text"]:focus,
+        .login .form-row input[type="password"]:focus {
+            border-color: #2a5298 !important;
+            outline: none !important;
+            box-shadow: 0 0 0 4px rgba(30, 60, 114, 0.2) !important;
+            transform: translateY(-1px) !important;
+        }
+        
+        /* Βελτίωση του στυλ για τα error messages */
+        .login .errornote {
+            background: #f8d7da !important;
+            color: #721c24 !important;
+            padding: 15px !important;
+            border-radius: 8px !important;
+            margin-bottom: 20px !important;
+            font-size: 14px !important;
+            text-align: left !important;
+        }
+        
+        /* Βελτίωση του στυλ για τα help text */
+        .login .help {
+            font-size: 14px !important;
+            color: #666 !important;
+            margin-top: 8px !important;
+            text-align: left !important;
+        }
+        
+        /* Βελτίωση του στυλ για τα links */
+        .login a {
+            color: #1e3c72 !important;
+            text-decoration: underline !important;
+        }
+        
+        .login a:hover {
+            color: #2a5298 !important;
+            text-decoration: none !important;
+        }
+        
+        /* Βελτίωση του στυλ για το form container */
+        .login #content-main {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px) !important;
+            border-radius: 20px !important;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.2) !important;
+            margin: 22px auto !important;
+            padding: 2em !important;
+            max-width: 600px !important;
+            width: 85% !important;
+            min-height: 400px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        
+        /* Βελτίωση του στυλ για το form */
+        .login form {
+            margin: 0 !important;
+            padding: 0 !important;
+            text-align: left !important;
+        }
+        
+        .login .form-row {
+            margin-bottom: 25px !important;
+            text-align: left !important;
+        }
+        
+        /* Βελτίωση του στυλ για το password reset link */
+        .login .password-reset-link {
+            text-align: center !important;
+            margin-top: 15px !important;
+            margin-bottom: 15px !important;
+        }
+        
+        .login .password-reset-link a {
+            color: #1e3c72 !important;
+            text-decoration: underline !important;
+            font-size: 14px !important;
+            font-weight: bold !important;
+        }
+        
+        .login .password-reset-link a:hover {
+            color: #2a5298 !important;
+            text-decoration: none !important;
+        }
+        
+        /* Βελτίωση της στοίχισης για τα form rows */
+        .login .form-row > div {
+            text-align: left !important;
+            width: 100% !important;
+        }
+        
+        /* Βελτίωση της στοίχισης για τα labels */
+        .login .form-row label {
+            display: block !important;
+            text-align: left !important;
+            margin-bottom: 8px !important;
+            font-weight: bold !important;
+            color: #333 !important;
+        }
+        
+        /* Βελτίωση της στοίχισης για τα input fields */
+        .login .form-row input {
+            display: block !important;
+            width: 100% !important;
+            text-align: left !important;
+        }
+        
+        /* Αφαιρούμε το "Καλώς ήρθατε" από το custom-admin-header στη σελίδα login */
+        .login #custom-admin-header > div:first-child {
+            display: none !important;
+        }
+        
+        /* Αφαιρούμε το "Αλλαγή συνθηματικού" και "Αποσύνδεση" από το custom-admin-header στη σελίδα login */
+        .login #custom-admin-header > div:last-child a[href*="password_change"],
+        .login #custom-admin-header > div:last-child form {
+            display: none !important;
+        }
+        
+        /* Αφαιρούμε το "LogBook" από το base_site.html στη σελίδα login */
+        .login #custom-admin-header > div:nth-child(2) {
+            display: none !important;
+        }
+        
+        /* Προσθέτουμε "LogBook" με font-size 17px */
+        .login #custom-admin-header > div:last-child::before {
+            content: "LogBook";
+            color: #fff;
+            font-size: 17px;
+            margin-right: 0;
+            font-weight: bold;
+        }
+        
+
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div id="content-main">
+        <form action="{{ app_path }}" method="post" id="login-form">{% csrf_token %}
+            {% block login_form %}
+                {% if form.errors and not form.non_field_errors %}
+                    <p class="errornote">
+                        Παρακαλώ διορθώστε το παρακάτω σφάλμα.
+                    </p>
+                {% endif %}
+
+                {% if form.non_field_errors %}
+                    {% for error in form.non_field_errors %}
+                        <p class="errornote">
+                            {{ error }}
+                        </p>
+                    {% endfor %}
+                {% endif %}
+
+                <div class="form-row">
+                    {{ form.username.errors }}
+                    <label for="{{ form.username.id_for_label }}">Όνομα χρήστη:</label> {{ form.username }}
+                </div>
+                <div class="form-row">
+                    {{ form.password.errors }}
+                    <label for="{{ form.password.id_for_label }}">Συνθηματικό:</label> {{ form.password }}
+                    <input type="hidden" name="next" value="{{ next }}">
+                </div>
+                
+                <!-- Password Reset Link -->
+                <div class="password-reset-link">
+                    <a href="{% url 'otp_password_reset' %}">Επαναφορά κωδικού με OTP μέσω email</a>
+                </div>
+                
+                <div class="submit-row">
+                    <input type="submit" value="Σύνδεση">
+                    <a href="/" class="home-button">Αρχική</a>
+                </div>
+            {% endblock %}
+        </form>
+    </div>
+{% endblock %} 

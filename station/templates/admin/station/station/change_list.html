@@ -1,0 +1,281 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <style>
+        .callsign-cell {
+            max-width: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        /* Μικρύνουμε όλες τις στήλες και τα gaps */
+        #result_list th,
+        #result_list td {
+            padding: 3px 2px !important;
+            font-size: 15px;
+            border-spacing: 0;
+            border-collapse: collapse;
+        }
+        
+        /* Ειδικά για κάθε στήλη - μικρότερα πλάτη */
+        #result_list th:nth-child(1), /* Μπάντα */
+        #result_list td:nth-child(1) {
+            width: 45px;
+            min-width: 45px;
+            max-width: 45px;
+        }
+        
+        #result_list th:nth-child(2), /* Σταθμός/Callsign */
+        #result_list td:nth-child(2) {
+            width: 55px;
+            min-width: 55px;
+            max-width: 55px;
+        }
+        
+        #result_list th:nth-child(3), /* Συχνότητα */
+        #result_list td:nth-child(3) {
+            width: 60px;
+            min-width: 60px;
+            max-width: 60px;
+        }
+        
+        #result_list th:nth-child(4), /* Modulation */
+        #result_list td:nth-child(4) {
+            width: 50px;
+            min-width: 50px;
+            max-width: 50px;
+        }
+        
+        #result_list th:nth-child(5), /* Τύπος Σήματος */
+        #result_list td:nth-child(5) {
+            width: 50px;
+            min-width: 50px;
+            max-width: 50px;
+        }
+        
+        #result_list th:nth-child(6), /* Decoding */
+        #result_list td:nth-child(6) {
+            width: 45px;
+            min-width: 45px;
+            max-width: 45px;
+        }
+        
+        #result_list th:nth-child(7), /* RSV/TRS */
+        #result_list td:nth-child(7) {
+            width: 50px;
+            min-width: 50px;
+            max-width: 50px;
+        }
+        
+        #result_list th:nth-child(8), /* Ημ/νία */
+        #result_list td:nth-child(8) {
+            width: 55px;
+            min-width: 55px;
+            max-width: 55px;
+        }
+        
+        #result_list th:nth-child(9), /* Ώρα */
+        #result_list td:nth-child(9) {
+            width: 40px;
+            min-width: 40px;
+            max-width: 40px;
+        }
+        
+        #result_list th:nth-child(10), /* Ενέργειες */
+        #result_list td:nth-child(10) {
+            width: 80px;
+            min-width: 80px;
+            max-width: 80px;
+        }
+        
+        /* Κείμενο που υπερχειλίζει */
+        #result_list td {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        /* Μικρύνουμε τα gaps στο table */
+        #result_list {
+            border-collapse: collapse;
+            border-spacing: 0;
+            width: 100%;
+            table-layout: fixed;
+        }
+        
+        /* Μικρύνουμε τα links στις ενέργειες */
+        #result_list td a {
+            font-size: 15px;
+            padding: 1px 2px;
+            margin: 0 1px;
+        }
+        
+        /* Μικρύνουμε τα headers */
+        #result_list th {
+            font-size: 13px;
+            font-weight: bold;
+            padding: 4px 2px;
+        }
+        
+        /* Εξασφαλίζουμε ότι δεν υπάρχουν επιπλέον gaps */
+        #result_list tr {
+            margin: 0;
+            padding: 0;
+        }
+        
+        #result_list td, #result_list th {
+            margin: 0;
+            border: 1px solid #ddd;
+        }
+        
+        /* Ειδικό styling για τη στήλη Τύπος */
+        #result_list td:nth-child(5) {
+            text-align: center !important;
+            font-size: 15px !important;
+            padding: 3px 1px !important;
+        }
+        
+        /* Ειδικό styling για τη στήλη Decoding */
+        #result_list td:nth-child(6) {
+            text-align: center !important;
+            font-size: 15px !important;
+            padding: 3px 1px !important;
+        }
+        
+        /* Ειδικό styling για τη στήλη RSV/TRS */
+        #result_list td:nth-child(7) {
+            text-align: center !important;
+            font-size: 15px !important;
+            padding: 3px 1px !important;
+        }
+        
+        /* Ειδικό styling για τη στήλη Ημ/νία */
+        #result_list td:nth-child(8) {
+            text-align: center !important;
+            font-size: 15px !important;
+            padding: 3px 1px !important;
+        }
+        
+        /* Ειδικό styling για τη στήλη Ώρα */
+        #result_list td:nth-child(9) {
+            text-align: center !important;
+            font-size: 15px !important;
+            padding: 3px 1px !important;
+        }
+        
+        /* Ειδικό styling για τη στήλη Ενέργειες - τοποθέτηση κειμένου κάθετα */
+        #result_list td:nth-child(10) {
+            text-align: center !important;
+            font-size: 15px !important;
+            padding: 3px 1px !important;
+        }
+        
+        /* Τοποθέτηση των links Επεξεργασία και Διαγραφή κάθετα */
+        #result_list td:nth-child(10) a {
+            display: block !important;
+            margin: 1px 0 !important;
+            padding: 1px 2px !important;
+            text-decoration: none !important;
+            font-size: 13px !important;
+            line-height: 1.2 !important;
+        }
+        
+        /* Χρώμα για το link Επεξεργασία */
+        #result_list td:nth-child(10) a.changelink {
+            color: #417690 !important;
+        }
+        
+        /* Χρώμα για το link Διαγραφή */
+        #result_list td:nth-child(10) a.deletelink {
+            color: #ba2121 !important;
+        }
+    </style>
+{% endblock %}
+
+{% block content_title %}
+    <h1>Διαχείριση Σταθμών</h1>
+{% endblock %}
+
+{% block object-tools-items %}
+    <li>
+        <a href="{% url 'admin:station_station_add' %}" class="addlink">
+            Προσθήκη Νέου Σταθμού
+        </a>
+    </li>
+{% endblock %}
+
+{% block result_list %}
+    {% if cl.result_count %}
+        <div class="results">
+            <table id="result_list">
+                <thead>
+                    <tr>
+                        <th>Μπάντα</th>
+                        <th>Σταθμός</th>
+                        <th>Συχνότητα</th>
+                        <th>Modulation</th>
+                        <th>Τύπος</th>
+                        <th>Decoding</th>
+                        <th>RSV/TRS</th>
+                        <th>Ημ/νία</th>
+                        <th>Ώρα</th>
+                        <th>Ενέργειες</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for station in cl.result_list %}
+                        <tr class="{% cycle 'row1' 'row2' %}">
+                            <td>{{ station.band.band }}m</td>
+                            <td class="callsign-cell" title="{{ station.Callsign_Station }}">{{ station.Callsign_Station }}</td>
+                            <td>{{ station.Frequency }}</td>
+                            <td>
+                                {% if station.AM %}AM{% elif station.FM %}FM{% elif station.USB %}USB{% elif station.LSB %}LSB{% elif station.SSB %}SSB{% elif station.CW %}CW{% else %}-{% endif %}
+                            </td>
+                            <td>
+                                {% if station.Analog %}
+                                    <span style="color: blue;">Analog</span>
+                                {% elif station.Digital %}
+                                    <span style="color: green;">Digital</span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if station.C4FM %}C4FM{% elif station.DMR %}DMR{% elif station.DSTAR %}DSTAR{% elif station.FAX %}FAX{% elif station.FSK31 %}FSK31{% elif station.FT4 %}FT4{% elif station.FT8 %}FT8{% elif station.JT65 %}JT65{% elif station.JT9 %}JT9{% elif station.RTTY %}RTTY{% elif station.SSTV %}SSTV{% else %}-{% endif %}
+                            </td>
+                            <td>{{ station.RSV }}/{{ station.TRS|default:"-" }}</td>
+                            <td>{{ station.Date|date:"d/m/Y" }}</td>
+                            <td>{{ station.Time|time:"H:i" }}</td>
+                            <td>
+                                <a href="{% url 'admin:station_station_change' station.id %}" class="changelink">Επεξεργασία</a>
+                                <a href="{% url 'admin:station_station_delete' station.id %}" class="deletelink">Διαγραφή</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>Δεν βρέθηκαν σταθμοί. <a href="{% url 'admin:station_station_add' %}">Προσθέστε τον πρώτο σταθμό</a></p>
+    {% endif %}
+{% endblock %}
+
+{% block pagination %}
+    {% if cl.result_count %}
+        {{ block.super }}
+    {% endif %}
+{% endblock %}
+
+{% block filters %}
+    {% if cl.has_filters %}
+        <div id="changelist-filter">
+            <h2>Φίλτρα</h2>
+            {% for spec in cl.filter_specs %}
+                {% admin_list_filter cl spec %}
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %} 

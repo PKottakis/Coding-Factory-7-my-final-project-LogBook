@@ -1,0 +1,16 @@
+{% extends "admin/index.html" %}
+
+{% block content_title %}{% endblock %}
+
+{% block content %}
+    {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <style>
+        #content-related {
+            display: none !important;
+        }
+    </style>
+{% endblock %} 

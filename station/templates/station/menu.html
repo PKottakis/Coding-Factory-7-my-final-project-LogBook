@@ -1,0 +1,647 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+
+{% block content %}
+<div id="content-main">
+    <!-- Όλα τα κουμπιά σε μια σειρά -->
+    <div class="admin-btn-row all-buttons">
+        <a href="/admin/" class="button admin-btn primary-btn">
+            <div class="btn-content">
+                <div class="btn-icon">⚙️</div>
+                <div class="btn-text">Διαχειριστικό</div>
+                <div class="btn-description">Πλήρης διαχείριση συστήματος</div>
+            </div>
+        </a>
+        
+        <a href="/queries/" class="button admin-btn primary-btn">
+            <div class="btn-content">
+                <div class="btn-icon">🔍</div>
+                <div class="btn-text">Ερωτήματα στη Βάση</div>
+                <div class="btn-description">Αναζήτηση και φιλτράρισμα δεδομένων</div>
+            </div>
+        </a>
+        
+        <button id="backup-btn" class="button admin-btn backup-btn">
+            <div class="btn-content">
+                <div class="btn-icon">💾</div>
+                <div class="btn-text">Backup Βάσης</div>
+                <div class="btn-description">Αποθήκευση σε Downloads</div>
+            </div>
+        </button>
+        
+        <button id="restore-btn" class="button admin-btn restore-btn">
+            <div class="btn-content">
+                <div class="btn-icon">🔄</div>
+                <div class="btn-text">Restore Βάσης</div>
+                <div class="btn-description">Από φάκελο Downloads</div>
+            </div>
+        </button>
+    </div>
+    
+    <!-- Modal για επιλογή backup αρχείου -->
+    <div id="restore-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Επιλογή Backup Αρχείου</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="backup-files-list">
+                    <p>Φόρτωση backup αρχείων...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification div -->
+    <div id="notification" class="notification" style="display: none;"></div>
+</div>
+
+<script>
+// Function to get CSRF token from cookies
+function getCSRFToken() {
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, setting up event listeners...');
+    
+    const backupBtn = document.getElementById('backup-btn');
+    const restoreBtn = document.getElementById('restore-btn');
+    const modal = document.getElementById('restore-modal');
+    const closeBtn = document.querySelector('.close');
+    
+    console.log('Backup button:', backupBtn);
+    console.log('Restore button:', restoreBtn);
+    console.log('Modal:', modal);
+    console.log('Close button:', closeBtn);
+    
+    // Backup functionality
+    backupBtn.addEventListener('click', function() {
+        console.log('Backup button clicked!');
+        backupBtn.disabled = true;
+        backupBtn.innerHTML = '<div class="btn-content"><div class="btn-icon">⏳</div><div class="btn-text">Δημιουργία...</div></div>';
+        
+        fetch('/database/backup/', {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => {
+            console.log('Backup response:', response);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Backup data:', data);
+            if (data.success) {
+                showNotification(data.message, 'success');
+            } else {
+                showNotification(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Backup error:', error);
+            showNotification('Σφάλμα κατά το backup: ' + error.message, 'error');
+        })
+        .finally(() => {
+            backupBtn.disabled = false;
+            backupBtn.innerHTML = '<div class="btn-content"><div class="btn-icon">💾</div><div class="btn-text">Backup Βάσης</div></div>';
+        });
+    });
+    
+    // Restore functionality
+    restoreBtn.addEventListener('click', function() {
+        console.log('Restore button clicked!');
+        loadBackupFiles();
+        modal.style.display = 'block';
+    });
+    
+    // Close modal
+    closeBtn.addEventListener('click', function() {
+        modal.style.display = 'none';
+    });
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+    
+    function loadBackupFiles() {
+        const filesList = document.getElementById('backup-files-list');
+        filesList.innerHTML = '<p>Φόρτωση backup αρχείων...</p>';
+        
+        fetch('/database/backup-files/', {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.files && data.files.length > 0) {
+                let html = '<h4>Διαθέσιμα Backup Αρχεία:</h4>';
+                data.files.forEach(file => {
+                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                    html += `
+                        <div class="backup-file-item">
+                            <div class="backup-file-info">
+                                <div class="backup-file-name">${file.filename}</div>
+                                <div class="backup-file-details">
+                                    Ημερομηνία: ${file.date} | Μέγεθος: ${sizeMB} MB
+                                </div>
+                            </div>
+                            <button class="restore-btn-small" onclick="restoreDatabase('${file.filename}')">
+                                Restore
+                            </button>
+                        </div>
+                    `;
+                });
+                filesList.innerHTML = html;
+            } else {
+                filesList.innerHTML = '<p>Δεν βρέθηκαν backup αρχεία.</p>';
+            }
+        })
+        .catch(error => {
+            filesList.innerHTML = '<p>Σφάλμα κατά τη φόρτωση backup αρχείων: ' + error.message + '</p>';
+        });
+    }
+    
+    function showNotification(message, type) {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.className = `notification ${type}`;
+        notification.style.display = 'block';
+        
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 5000);
+    }
+});
+
+function restoreDatabase(filename) {
+    if (!confirm(`Είστε σίγουροι ότι θέλετε να κάνετε restore από το ${filename};\n\nΠΡΟΣΟΧΗ: Αυτή η ενέργεια θα αντικαταστήσει την τρέχουσα βάση δεδομένων!`)) {
+        return;
+    }
+    
+    const restoreBtn = document.getElementById('restore-btn');
+    restoreBtn.disabled = true;
+    restoreBtn.innerHTML = '<div class="btn-content"><div class="btn-icon">⏳</div><div class="btn-text">Restore...</div></div>';
+    
+    fetch('/database/restore/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({ filename: filename })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            document.getElementById('restore-modal').style.display = 'none';
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Σφάλμα κατά το restore: ' + error.message, 'error');
+    })
+    .finally(() => {
+        restoreBtn.disabled = false;
+        restoreBtn.innerHTML = '<div class="btn-content"><div class="btn-icon">🔄</div><div class="btn-text">Restore Βάσης</div></div>';
+    });
+}
+
+function showNotification(message, type) {
+    const notification = document.getElementById('notification');
+    notification.textContent = message;
+    notification.className = `notification ${type}`;
+    notification.style.display = 'block';
+    
+    setTimeout(() => {
+        notification.style.display = 'none';
+    }, 5000);
+}
+</script>
+{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <style>
+        /* Επικαλύπτουμε τις admin styles για το menu */
+        #content-main {
+            background: transparent !important;
+            backdrop-filter: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            position: relative !important;
+            overflow: visible !important;
+        }
+        
+        /* Επικαλύπτουμε το #content > div padding */
+        #content > div {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        
+        /* Επικαλύπτουμε το #content styling */
+        #content {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px) !important;
+            border-radius: 20px !important;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.2) !important;
+            margin: 20px 0 20px 0 !important;
+            margin-left: 0 !important;
+            padding: 10em !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+        
+        .admin-btn-row {
+            display: flex;
+            flex-direction: row;
+            gap: 2em;
+            justify-content: center;
+            align-items: stretch;
+            flex-wrap: nowrap;
+            margin: 2em 0;
+        }
+        
+        .all-buttons {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2em;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: stretch;
+        }
+        
+        .admin-btn {
+            display: flex;
+            flex: 1;
+            padding: 0;
+            border: none;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 
+                0 8px 25px rgba(30, 60, 114, 0.3),
+                0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin: 0;
+            min-width: 250px;
+            min-height: 180px;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        
+        .primary-btn {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        }
+        
+        .backup-btn {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        }
+        
+        .restore-btn {
+            background: linear-gradient(135deg, #e67e22 0%, #f39c12 100%);
+        }
+        
+        .admin-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .admin-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 
+                0 15px 35px rgba(30, 60, 114, 0.4),
+                0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .primary-btn:hover {
+            box-shadow: 
+                0 15px 35px rgba(39, 174, 96, 0.4),
+                0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .restore-btn:hover {
+            box-shadow: 
+                0 15px 35px rgba(230, 126, 34, 0.4),
+                0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .admin-btn:hover::before {
+            left: 100%;
+        }
+        
+        .admin-btn:active {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 8px 20px rgba(30, 60, 114, 0.3),
+                0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-content {
+            padding: 2em 2.5em;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8em;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .btn-icon {
+            font-size: 2.5em;
+            line-height: 1;
+        }
+        
+        .btn-text {
+            font-size: 1.3em;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+
+        .btn-description {
+            font-size: 0.8em;
+            color: #999;
+            text-align: center;
+        }
+        
+        /* Modal styles */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            margin: 3% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 500px;
+            max-height: 85vh;
+            animation: modalSlideIn 0.3s ease-out;
+            overflow: hidden;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 0.5em 2em;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+        
+        .close {
+            color: white;
+            font-size: 2em;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+        
+        .close:hover {
+            opacity: 0.7;
+        }
+        
+        .modal-body {
+            padding: 0.5em;
+            max-height: 53vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #1e3c72 #f0f0f0;
+        }
+        
+        /* Custom scrollbar για Webkit browsers (Chrome, Safari, Edge) */
+        .modal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .modal-body::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+        
+        .modal-body::-webkit-scrollbar-thumb {
+            background: #1e3c72;
+            border-radius: 4px;
+        }
+        
+        .modal-body::-webkit-scrollbar-thumb:hover {
+            background: #2a5298;
+        }
+        
+        .backup-file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1em;
+            margin: 0.5em 0;
+            background: rgba(30, 60, 114, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(30, 60, 114, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .backup-file-item:hover {
+            background: rgba(30, 60, 114, 0.15);
+            transform: translateX(5px);
+        }
+        
+        .backup-file-info {
+            flex: 1;
+        }
+        
+        .backup-file-name {
+            font-weight: 600;
+            color: #1e3c72;
+            margin-bottom: 0.3em;
+        }
+        
+        .backup-file-details {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .restore-btn-small {
+            background: linear-gradient(135deg, #e67e22 0%, #f39c12 100%);
+            color: white;
+            border: none;
+            padding: 0.5em 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .restore-btn-small:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(230, 126, 34, 0.4);
+        }
+        
+        /* Notification styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1em 2em;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            z-index: 1001;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        .notification.success {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        }
+        
+        .notification.error {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .admin-btn-row {
+                flex-direction: column;
+                gap: 2em;
+                align-items: center;
+            }
+            
+            .all-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .admin-btn {
+                min-width: 250px;
+                min-height: 160px;
+                flex: none;
+            }
+            
+            .btn-content {
+                padding: 1.8em 2em;
+            }
+            
+            .btn-icon {
+                font-size: 2.2em;
+            }
+            
+            .btn-text {
+                font-size: 1.2em;
+            }
+            
+            .btn-description {
+                font-size: 0.75em;
+            }
+            
+            .all-buttons {
+                padding: 1.5em;
+                margin: 1em 0;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 2% auto;
+                max-width: none;
+                max-height: 90vh;
+            }
+            
+            .modal-body {
+                max-height: 70vh;
+                padding: 1em;
+            }
+        }
+        
+        /* Animation for page load */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .admin-btn {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .admin-btn:nth-child(1) { animation-delay: 0.1s; }
+        .admin-btn:nth-child(2) { animation-delay: 0.2s; }
+        .admin-btn:nth-child(3) { animation-delay: 0.3s; }
+        .admin-btn:nth-child(4) { animation-delay: 0.4s; }
+    </style>
+{% endblock %} 

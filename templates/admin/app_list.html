@@ -1,0 +1,35 @@
+{% extends "admin/app_list.html" %}
+{% load i18n %}
+
+{% block app_list %}
+  <div id="content-main">
+    <h1>{% block title %}{% if app_list %}{% trans 'Applications' %}{% else %}{% trans 'No applications' %}{% endif %}{% endblock %}</h1>
+    {% for app in app_list %}
+      <div class="app-{{ app.app_label }} module">
+        <table>
+          <caption>
+            {% if app.name == "Station" or app.app_label == "station" %}
+              {{ app.name }}
+            {% else %}
+              <a href="{{ app.app_url }}" class="section" title="Models in the {{ app.name }} application">{{ app.name }}</a>
+            {% endif %}
+          </caption>
+          <tbody>
+          {% for model in app.models %}
+            <tr class="model-{{ model.object_name|lower }}">
+              <th scope="row">
+                {% if model.object_name == "Station" %}
+                  {{ model.name }}
+                {% else %}
+                  <a href="{{ model.admin_url }}">{{ model.name }}</a>
+                {% endif %}
+              </th>
+              <td>{{ model.count }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %} 
